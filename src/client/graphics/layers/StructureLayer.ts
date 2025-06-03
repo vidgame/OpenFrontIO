@@ -13,6 +13,7 @@ import MissileSiloReloadingIcon from "../../../../resources/images/buildings/sil
 import missileSiloIcon from "../../../../resources/images/buildings/silo1.png";
 import SAMMissileReloadingIcon from "../../../../resources/images/buildings/silo4-reloading.png";
 import SAMMissileIcon from "../../../../resources/images/buildings/silo4.png";
+import factoryIcon from "../../../../resources/images/FactoryIconWhite.svg";
 import { Cell, UnitType } from "../../../core/game/Game";
 import {
   euclDistFN,
@@ -82,6 +83,12 @@ export class StructureLayer implements Layer {
       borderRadius: 8.525,
       territoryRadius: 6.525,
       borderType: UnitBorderType.Square,
+    },
+    [UnitType.Factory]: {
+      icon: factoryIcon,
+      borderRadius: 8.525,
+      territoryRadius: 6.525,
+      borderType: UnitBorderType.Round,
     },
   };
 

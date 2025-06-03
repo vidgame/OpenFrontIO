@@ -86,6 +86,8 @@
     "build_desc": "Description",
     "build_city": "City",
     "build_city_desc": "Increases your max population. Useful when you can't expand your territory or you're about to hit your population limit.",
+    "build_factory": "Factory",
+    "build_factory_desc": "Generates extra gold every second.",
     "build_defense": "Defense Post",
     "build_defense_desc": "Increases defenses around nearby borders, which show a checkered pattern. Attacks from enemies are slower and have more casualties.",
     "build_port": "Port",
@@ -225,7 +227,8 @@
     "sam_launcher": "SAM Launcher",
     "atom_bomb": "Atom Bomb",
     "hydrogen_bomb": "Hydrogen Bomb",
-    "mirv": "MIRV"
+    "mirv": "MIRV",
+    "factory": "Factory"
   },
   "user_setting": {
     "title": "User Settings",
@@ -354,7 +357,8 @@
       "warship": "Captures trade ships, destroys ships and boats",
       "port": "Sends trade ships to generate gold",
       "defense_post": "Increase defenses of nearby borders",
-      "city": "Increase max population"
+      "city": "Increase max population",
+      "factory": "Produces gold over time"
     },
     "not_enough_money": "Not enough money"
   },
