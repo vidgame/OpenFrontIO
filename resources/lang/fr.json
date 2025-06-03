@@ -78,6 +78,8 @@
     "build_desc": "Description",
     "build_city": "Ville",
     "build_city_desc": "Utile quand vous ne pouvez agrandir votre territoire ou quand vous atteignez votre limite de population.",
+    "build_factory": "Usine",
+    "build_factory_desc": "Produit de l'or en continu.",
     "build_defense": "Poste de défense",
     "build_defense_desc": "Augmente les défenses autour des frontières voisines, qui montrent un motif en damier. Les attaques des ennemis sont plus lentes et font plus de blessés.",
     "build_port": "Port",
@@ -217,7 +219,8 @@
     "sam_launcher": "Lanceur de SAM",
     "atom_bomb": "Bombe atomique",
     "hydrogen_bomb": "Bombe à hydrogène",
-    "mirv": "MIRV"
+    "mirv": "MIRV",
+    "factory": "Usine"
   },
   "user_setting": {
     "title": "Paramètres utilisateur",
@@ -346,7 +349,8 @@
       "warship": "Capture les navires commerciaux, détruit les navires de guerre et les bateaux",
       "port": "Envoie des navires commerciaux pour produire de l'or",
       "defense_post": "Augmente les défenses des frontières voisines",
-      "city": "Augmente la population maximale"
+      "city": "Augmente la population maximale",
+      "factory": "Produit de l'or au fil du temps"
     },
     "not_enough_money": "Pas assez d'argent"
   },
