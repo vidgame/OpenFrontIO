@@ -6,7 +6,7 @@ import { TransformHandler } from "../TransformHandler";
 import { Layer } from "./Layer";
 import { UnitInfoModal } from "./UnitInfoModal";
 
-import airportBuildingIcon from "../../../../resources/images/AirportIconWhite.svg";
+import airportBuildingIcon from "../../../../resources/images/AirportUnitIcon.svg";
 import cityIcon from "../../../../resources/images/buildings/cityAlt1.png";
 import shieldIcon from "../../../../resources/images/buildings/fortAlt2.png";
 import anchorIcon from "../../../../resources/images/buildings/port1.png";
