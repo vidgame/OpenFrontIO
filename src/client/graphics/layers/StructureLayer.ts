@@ -157,6 +157,20 @@ export class StructureLayer implements Layer {
       console.log(
         `icon data width height: ${iconData.width}, ${iconData.height}`,
       );
+      // Re-render units that rely on this icon once it's loaded
+      this.game.units().forEach((u) => {
+        const currentType = u.constructionType() ?? u.type();
+        let expectedKey: string = currentType;
+        if (
+          u.type() === UnitType.Construction &&
+          u.constructionType() === UnitType.Airport
+        ) {
+          expectedKey = "airportConstruction";
+        }
+        if (expectedKey === unitType) {
+          this.handleUnitRendering(u);
+        }
+      });
     };
   }
 
