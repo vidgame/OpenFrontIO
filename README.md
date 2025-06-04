@@ -40,7 +40,7 @@ This project uses a dual-licensing approach:
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/openfrontio/OpenFrontIO.git
+   git clone https://github.com/vidgame/OpenFrontIO.git
    cd OpenFrontIO
    ```
 
