@@ -258,10 +258,7 @@ export class StructureLayer implements Layer {
   private handleUnitRendering(unit: UnitView) {
     const unitType = unit.constructionType() ?? unit.type();
     let iconKey: string = unitType;
-    if (
-      unit.type() === UnitType.Construction &&
-      unit.constructionType() === UnitType.Airport
-    ) {
+    if (unit.constructionType() === UnitType.Airport) {
       iconKey = "airportConstruction";
     }
     if (!this.isUnitTypeSupported(unitType)) return;
