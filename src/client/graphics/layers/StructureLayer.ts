@@ -7,6 +7,7 @@ import { Layer } from "./Layer";
 import { UnitInfoModal } from "./UnitInfoModal";
 
 import airportBuildingIcon from "../../../../resources/images/AirportIconWhite.svg";
+import airportConstructionIcon from "../../../../resources/images/buildings/airportConstruction.svg";
 import cityIcon from "../../../../resources/images/buildings/cityAlt1.png";
 import shieldIcon from "../../../../resources/images/buildings/fortAlt2.png";
 import anchorIcon from "../../../../resources/images/buildings/port1.png";
@@ -124,6 +125,12 @@ export class StructureLayer implements Layer {
       borderRadius: 8.525,
       territoryRadius: 6.525,
       borderType: UnitBorderType.Square,
+    });
+    this.loadIcon("airportConstruction", {
+      icon: airportConstructionIcon,
+      borderRadius: 8.525,
+      territoryRadius: 6.525,
+      borderType: UnitBorderType.Round,
     });
   }
 
@@ -250,7 +257,10 @@ export class StructureLayer implements Layer {
 
   private handleUnitRendering(unit: UnitView) {
     const unitType = unit.constructionType() ?? unit.type();
-    const iconType = unitType;
+    let iconKey: string = unitType;
+    if (unit.constructionType() === UnitType.Airport) {
+      iconKey = "airportConstruction";
+    }
     if (!this.isUnitTypeSupported(unitType)) return;
 
     const config = this.unitConfigs[unitType];
@@ -258,14 +268,10 @@ export class StructureLayer implements Layer {
 
     if (unitType === UnitType.SAMLauncher && unit.isCooldown()) {
       icon = this.unitIcons.get("reloadingSam");
-    } else {
-      icon = this.unitIcons.get(iconType);
-    }
-
-    if (unitType === UnitType.MissileSilo && unit.isCooldown()) {
+    } else if (unitType === UnitType.MissileSilo && unit.isCooldown()) {
       icon = this.unitIcons.get("reloadingSilo");
     } else {
-      icon = this.unitIcons.get(iconType);
+      icon = this.unitIcons.get(iconKey);
     }
 
     if (!config || !icon) return;
