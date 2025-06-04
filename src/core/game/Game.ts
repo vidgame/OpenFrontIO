@@ -141,11 +141,13 @@ export enum UnitType {
   AtomBomb = "Atom Bomb",
   HydrogenBomb = "Hydrogen Bomb",
   TradeShip = "Trade Ship",
+  TradePlane = "Trade Plane",
   MissileSilo = "Missile Silo",
   DefensePost = "Defense Post",
   SAMLauncher = "SAM Launcher",
   City = "City",
   Factory = "Factory",
+  Airport = "Airport",
   MIRV = "MIRV",
   MIRVWarhead = "MIRV Warhead",
   Construction = "Construction",
@@ -184,6 +186,10 @@ export interface UnitParamsMap {
     lastSetSafeFromPirates?: number;
   };
 
+  [UnitType.TradePlane]: {
+    targetUnit: Unit;
+  };
+
   [UnitType.MissileSilo]: {
     cooldownDuration?: number;
   };
@@ -195,6 +201,8 @@ export interface UnitParamsMap {
   [UnitType.City]: {};
 
   [UnitType.Factory]: {};
+
+  [UnitType.Airport]: {};
 
   [UnitType.MIRV]: {};
 
@@ -539,6 +547,7 @@ export interface Player {
   toUpdate(): PlayerUpdate;
   playerProfile(): PlayerProfile;
   tradingPorts(port: Unit): Unit[];
+  tradingAirports(airport: Unit): Unit[];
   // WARNING: this operation is expensive.
   bestTransportShipSpawn(tile: TileRef): TileRef | false;
 }

@@ -190,6 +190,13 @@ describe("Stats", () => {
     });
   });
 
+  test("unitBuild airport", () => {
+    stats.unitBuild(player1, UnitType.Airport);
+    expect(stats.stats()).toStrictEqual({
+      client1: { units: { airp: [1n] } },
+    });
+  });
+
   test("unitCapture", () => {
     stats.unitCapture(player1, UnitType.DefensePost);
     expect(stats.stats()).toStrictEqual({
