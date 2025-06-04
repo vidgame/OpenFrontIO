@@ -3,6 +3,7 @@ import atomBombSprite from "../../../resources/sprites/atombomb.png";
 import hydrogenBombSprite from "../../../resources/sprites/hydrogenbomb.png";
 import mirvSprite from "../../../resources/sprites/mirv2.png";
 import samMissileSprite from "../../../resources/sprites/samMissile.png";
+import tradePlaneSprite from "../../../resources/sprites/tradeplane.svg";
 import tradeShipSprite from "../../../resources/sprites/tradeship.png";
 import transportShipSprite from "../../../resources/sprites/transportship.png";
 import warshipSprite from "../../../resources/sprites/warship.png";
@@ -17,6 +18,7 @@ const SPRITE_CONFIG: Partial<Record<UnitType, string>> = {
   [UnitType.AtomBomb]: atomBombSprite,
   [UnitType.HydrogenBomb]: hydrogenBombSprite,
   [UnitType.TradeShip]: tradeShipSprite,
+  [UnitType.TradePlane]: tradePlaneSprite,
   [UnitType.MIRV]: mirvSprite,
 };
 
