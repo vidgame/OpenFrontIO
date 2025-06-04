@@ -279,6 +279,9 @@ export class UnitLayer implements Layer {
       case UnitType.TradeShip:
         this.handleTradeShipEvent(unit);
         break;
+      case UnitType.TradePlane:
+        this.handleTradePlaneEvent(unit);
+        break;
       case UnitType.MIRVWarhead:
         this.handleMIRVWarhead(unit);
         break;
@@ -434,6 +437,10 @@ export class UnitLayer implements Layer {
   }
 
   private handleTradeShipEvent(unit: UnitView) {
+    this.drawSprite(unit);
+  }
+
+  private handleTradePlaneEvent(unit: UnitView) {
     this.drawSprite(unit);
   }
 
