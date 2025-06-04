@@ -258,10 +258,27 @@ export class StructureLayer implements Layer {
   private handleUnitRendering(unit: UnitView) {
     const unitType = unit.constructionType() ?? unit.type();
     let iconKey: string = unitType;
-    if (
-      unit.type() === UnitType.Construction &&
-      unit.constructionType() === UnitType.Airport
-    ) {
+private handleUnitRendering(unit: UnitView) {
+  const unitType = unit.constructionType() ?? unit.type();
+  let iconKey: string = unitType;
+
+  // --- Début du code résolu (conflit entre branches) ---
+  if (
+    unit.type() === UnitType.Construction &&
+    unit.constructionType() === UnitType.Airport
+  ) {
+    iconKey = "airportConstruction";
+  }
+  // --- Fin du code résolu ---
+
+  if (!this.isUnitTypeSupported(unitType)) return;
+
+  const config = this.unitConfigs[unitType];
+  let icon: ImageData | undefined;
+
+  if (unitType === UnitType.SAMLauncher && unit.isCooldown()) {
+    icon = this.unitIcons.get("reloadingSam");
+  }
       iconKey = "airportConstruction";
     }
     if (!this.isUnitTypeSupported(unitType)) return;
