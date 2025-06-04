@@ -210,13 +210,93 @@ export class StructureLayer implements Layer {
     return unitType in this.unitConfigs;
   }
 
+  private getDrawFN(type: UnitBorderType): DistanceFunction {
+    switch (type) {
+      case UnitBorderType.Round:
+        return euclDistFN;
+      case UnitBorderType.Diamond:
+        return manhattanDistFN;
+      case UnitBorderType.Square:
+        return rectDistFN;
+      case UnitBorderType.Hexagon:
+        return hexDistFN;
+    }
+  }
+
+  private handleUnitRendering(unit: UnitView) {
+    // Si l'unité est en construction d'aéroport, on affiche l'icône "airportConstruction"
+    const unitType = unit.constructionType() ?? unit.type();
+    let iconKey: string = unitType;
+
+    if (
+      unit.type() === UnitType.Construction &&
+      unit.constructionType() === UnitType.Airport
+    ) {
+      iconKey = "airportConstruction";
+    }
+
+    if (!this.isUnitTypeSupported(unitType)) return;
+
+    const config = this.unitConfigs[unitType];
+    let icon: ImageData | undefined;
+
+    // Si le SAM est en cooldown, afficher l'icône "reloadingSam"
+    if (unitType === UnitType.SAMLauncher && unit.isCooldown()) {
+      icon = this.unitIcons.get("reloadingSam");
+    }
+    // Si le Missile Silo est en cooldown, afficher l'icône "reloadingSilo"
+    else if (unitType === UnitType.MissileSilo && unit.isCooldown()) {
+      icon = this.unitIcons.get("reloadingSilo");
+    }
+    // Sinon, on prend l'icône normale (ou "airportConstruction" si c'est en construction d'aéroport)
+    else {
+      icon = this.unitIcons.get(iconKey);
+    }
+
+    if (!config || !icon) return;
+
+    const drawFunction = this.getDrawFN(config.borderType);
+    // Effacer le dessin précédent pour cette unité
+    for (const tile of this.game.bfs(
+      unit.tile(),
+      drawFunction(unit.tile(), config.borderRadius, true),
+    )) {
+      this.clearCell(new Cell(this.game.x(tile), this.game.y(tile)));
+    }
+
+    // Si l'unité n'est pas active, on ne la dessine pas
+    if (!unit.isActive()) return;
+
+    // Déterminer la couleur de la bordure selon l'état de l'unité
+    let borderColor = this.theme.borderColor(unit.owner());
+    if (unitType === UnitType.SAMLauncher && unit.isCooldown()) {
+      borderColor = reloadingColor;
+    } else if (unitType === UnitType.MissileSilo && unit.isCooldown()) {
+      borderColor = reloadingColor;
+    } else if (unit.type() === UnitType.Construction) {
+      borderColor = underConstructionColor;
+    }
+    if (this.selectedStructureUnit === unit) {
+      borderColor = selectedUnitColor;
+    }
+
+    // Dessiner la bordure et le territoire
+    this.drawBorder(unit, borderColor, config, drawFunction);
+
+    // Calculer où placer l'icône au centre de la tuile de l'unité
+    const startX = this.game.x(unit.tile()) - Math.floor(icon.width / 2);
+    const startY = this.game.y(unit.tile()) - Math.floor(icon.height / 2);
+    // Dessiner effectivement l'icône pixel par pixel
+    this.renderIcon(icon, startX, startY, icon.width, icon.height, unit);
+  }
+
   private drawBorder(
     unit: UnitView,
     borderColor: Colord,
     config: UnitRenderConfig,
     distanceFN: DistanceFunction,
   ) {
-    // Draw border and territory
+    // Dessiner la bordure (zone la plus extérieure)
     for (const tile of this.game.bfs(
       unit.tile(),
       distanceFN(unit.tile(), config.borderRadius, true),
@@ -228,6 +308,7 @@ export class StructureLayer implements Layer {
       );
     }
 
+    // Dessiner le territoire (zone interne, avec transparence)
     for (const tile of this.game.bfs(
       unit.tile(),
       distanceFN(unit.tile(), config.territoryRadius, true),
@@ -242,76 +323,6 @@ export class StructureLayer implements Layer {
     }
   }
 
-  private getDrawFN(type: UnitBorderType) {
-    switch (type) {
-      case UnitBorderType.Round:
-        return euclDistFN;
-      case UnitBorderType.Diamond:
-        return manhattanDistFN;
-      case UnitBorderType.Square:
-        return rectDistFN;
-      case UnitBorderType.Hexagon:
-        return hexDistFN;
-    }
-  }
-
-  private handleUnitRendering(unit: UnitView) {
-    const unitType = unit.constructionType() ?? unit.type();
-    let iconKey: string = unitType;
-    if (unit.constructionType() === UnitType.Airport) {
-      iconKey = "airportConstruction";
-    }
-    if (!this.isUnitTypeSupported(unitType)) return;
-
-    const config = this.unitConfigs[unitType];
-    let icon: ImageData | undefined;
-
-    if (unitType === UnitType.SAMLauncher && unit.isCooldown()) {
-      icon = this.unitIcons.get("reloadingSam");
-    } else if (unitType === UnitType.MissileSilo && unit.isCooldown()) {
-      icon = this.unitIcons.get("reloadingSilo");
-    } else {
-      icon = this.unitIcons.get(iconKey);
-    }
-
-    if (!config || !icon) return;
-
-    const drawFunction = this.getDrawFN(config.borderType);
-    // Clear previous rendering
-    for (const tile of this.game.bfs(
-      unit.tile(),
-      drawFunction(unit.tile(), config.borderRadius, true),
-    )) {
-      this.clearCell(new Cell(this.game.x(tile), this.game.y(tile)));
-    }
-
-    if (!unit.isActive()) return;
-
-    let borderColor = this.theme.borderColor(unit.owner());
-    if (unitType === UnitType.SAMLauncher && unit.isCooldown()) {
-      borderColor = reloadingColor;
-    } else if (unit.type() === UnitType.Construction) {
-      borderColor = underConstructionColor;
-    }
-
-    if (unitType === UnitType.MissileSilo && unit.isCooldown()) {
-      borderColor = reloadingColor;
-    } else if (unit.type() === UnitType.Construction) {
-      borderColor = underConstructionColor;
-    }
-
-    if (this.selectedStructureUnit === unit) {
-      borderColor = selectedUnitColor;
-    }
-
-    this.drawBorder(unit, borderColor, config, drawFunction);
-
-    const startX = this.game.x(unit.tile()) - Math.floor(icon.width / 2);
-    const startY = this.game.y(unit.tile()) - Math.floor(icon.height / 2);
-    // Draw the icon
-    this.renderIcon(icon, startX, startY, icon.width, icon.height, unit);
-  }
-
   private renderIcon(
     iconData: ImageData,
     startX: number,
@@ -320,6 +331,7 @@ export class StructureLayer implements Layer {
     height: number,
     unit: UnitView,
   ) {
+    // Couleur de remplissage selon l'état de l'unité
     let color = this.theme.borderColor(unit.owner());
     if (unit.type() === UnitType.Construction) {
       color = underConstructionColor;
@@ -328,11 +340,9 @@ export class StructureLayer implements Layer {
       for (let x = 0; x < width; x++) {
         const iconIndex = (y * width + x) * 4;
         const alpha = iconData.data[iconIndex + 3];
-
         if (alpha > 0) {
           const targetX = startX + x;
           const targetY = startY + y;
-
           if (
             targetX >= 0 &&
             targetX < this.game.width() &&
@@ -361,17 +371,13 @@ export class StructureLayer implements Layer {
     maxDistance: number = 10,
   ): UnitView | null {
     const targetRef = this.game.ref(cell.x, cell.y);
-
     const allUnitTypes = Object.values(UnitType);
-
     const nearby = this.game.nearbyUnits(targetRef, maxDistance, allUnitTypes);
-
     for (const { unit } of nearby) {
       if (unit.isActive() && this.isUnitTypeSupported(unit.type())) {
         return unit;
       }
     }
-
     return null;
   }
 
