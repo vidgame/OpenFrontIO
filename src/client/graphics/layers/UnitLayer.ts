@@ -76,7 +76,7 @@ export class UnitLayer implements Layer {
     this.eventBus.on(UnitSelectionEvent, (e) => this.onUnitSelectionChange(e));
     this.redraw();
 
-    loadAllSprites();
+    loadAllSprites().then(() => this.redraw());
   }
 
   /**
@@ -502,6 +502,10 @@ export class UnitLayer implements Layer {
   }
 
   drawSprite(unit: UnitView, customTerritoryColor?: Colord) {
+    if (!isSpriteReady(unit.type())) {
+      return; // sprite still loading
+    }
+
     const x = this.game.x(unit.tile());
     const y = this.game.y(unit.tile());
 
