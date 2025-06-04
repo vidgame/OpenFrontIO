@@ -789,11 +789,14 @@ export class PlayerImpl implements Player {
         return canBuildTransportShip(this.mg, this, targetTile);
       case UnitType.TradeShip:
         return this.tradeShipSpawn(targetTile);
+      case UnitType.TradePlane:
+        return this.tradePlaneSpawn(targetTile);
       case UnitType.MissileSilo:
       case UnitType.DefensePost:
       case UnitType.SAMLauncher:
       case UnitType.City:
       case UnitType.Factory:
+      case UnitType.Airport:
       case UnitType.Construction:
         return this.landBasedStructureSpawn(targetTile, validTiles);
       default:
@@ -910,6 +913,16 @@ export class PlayerImpl implements Player {
 
   tradeShipSpawn(targetTile: TileRef): TileRef | false {
     const spawns = this.units(UnitType.Port).filter(
+      (u) => u.tile() === targetTile,
+    );
+    if (spawns.length === 0) {
+      return false;
+    }
+    return spawns[0].tile();
+  }
+
+  tradePlaneSpawn(targetTile: TileRef): TileRef | false {
+    const spawns = this.units(UnitType.Airport).filter(
       (u) => u.tile() === targetTile,
     );
     if (spawns.length === 0) {
@@ -1055,5 +1068,34 @@ export class PlayerImpl implements Player {
       .forEach((p) => ports.push(p));
 
     return ports;
+  }
+
+  tradingAirports(airport: Unit): Unit[] {
+    const airports = this.mg
+      .players()
+      .filter((p) => p !== airport.owner() && p.canTrade(airport.owner()))
+      .flatMap((p) => p.units(UnitType.Airport))
+      .sort(
+        (a, b) =>
+          this.mg.manhattanDist(airport.tile(), a.tile()) -
+          this.mg.manhattanDist(airport.tile(), b.tile()),
+      );
+
+    for (
+      let i = 0;
+      i < this.mg.config().proximityBonusPortsNb(airports.length);
+      i++
+    ) {
+      airports.push(airports[i]);
+    }
+
+    this.mg
+      .players()
+      .filter((p) => p !== airport.owner() && p.canTrade(airport.owner()))
+      .filter((p) => p.isAlliedWith(airport.owner()))
+      .flatMap((p) => p.units(UnitType.Airport))
+      .forEach((a) => airports.push(a));
+
+    return airports;
   }
 }

@@ -10,15 +10,16 @@ import {
   UnitType,
 } from "../game/Game";
 import { TileRef } from "../game/GameMap";
+import { AirportExecution } from "./AirportExecution";
 import { CityExecution } from "./CityExecution";
 import { DefensePostExecution } from "./DefensePostExecution";
+import { FactoryExecution } from "./FactoryExecution";
 import { MirvExecution } from "./MIRVExecution";
 import { MissileSiloExecution } from "./MissileSiloExecution";
 import { NukeExecution } from "./NukeExecution";
 import { PortExecution } from "./PortExecution";
 import { SAMLauncherExecution } from "./SAMLauncherExecution";
 import { WarshipExecution } from "./WarshipExecution";
-import { FactoryExecution } from "./FactoryExecution";
 
 export class ConstructionExecution implements Execution {
   private player: Player;
@@ -112,6 +113,9 @@ export class ConstructionExecution implements Execution {
         break;
       case UnitType.Port:
         this.mg.addExecution(new PortExecution(player.id(), this.tile));
+        break;
+      case UnitType.Airport:
+        this.mg.addExecution(new AirportExecution(player.id(), this.tile));
         break;
       case UnitType.MissileSilo:
         this.mg.addExecution(new MissileSiloExecution(player.id(), this.tile));

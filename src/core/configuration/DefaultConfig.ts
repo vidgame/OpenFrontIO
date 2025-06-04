@@ -363,6 +363,11 @@ export class DefaultConfig implements Config {
           cost: () => 0n,
           territoryBound: false,
         };
+      case UnitType.TradePlane:
+        return {
+          cost: () => 0n,
+          territoryBound: false,
+        };
       case UnitType.MissileSilo:
         return {
           cost: (p: Player) =>
@@ -429,6 +434,15 @@ export class DefaultConfig implements Config {
               : 3_000_000n,
           territoryBound: true,
           constructionDuration: this.instantBuild() ? 0 : 2 * 10,
+        };
+      case UnitType.Airport:
+        return {
+          cost: (p: Player) =>
+            p.type() === PlayerType.Human && this.infiniteGold()
+              ? 0n
+              : 10_000_000n,
+          territoryBound: true,
+          constructionDuration: this.instantBuild() ? 0 : 10 * 10,
         };
       case UnitType.Construction:
         return {
