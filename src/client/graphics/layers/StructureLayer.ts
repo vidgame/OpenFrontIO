@@ -142,11 +142,15 @@ export class StructureLayer implements Layer {
       const tempCanvas = document.createElement("canvas");
       const tempContext = tempCanvas.getContext("2d");
       if (tempContext === null) throw new Error("2d context not supported");
-      tempCanvas.width = image.width;
-      tempCanvas.height = image.height;
 
-      // Draw the unit icon
-      tempContext.drawImage(image, 0, 0);
+      // Icons may have inconsistent native sizes (e.g. airport icon is 160px
+      // wide). Normalize everything to 16x16 so units appear consistently.
+      const ICON_SIZE = 16;
+      tempCanvas.width = ICON_SIZE;
+      tempCanvas.height = ICON_SIZE;
+
+      // Draw the unit icon scaled to the normalized size
+      tempContext.drawImage(image, 0, 0, ICON_SIZE, ICON_SIZE);
       const iconData = tempContext.getImageData(
         0,
         0,
@@ -157,6 +161,20 @@ export class StructureLayer implements Layer {
       console.log(
         `icon data width height: ${iconData.width}, ${iconData.height}`,
       );
+      // Re-render units that rely on this icon once it's loaded
+      this.game.units().forEach((u) => {
+        const currentType = u.constructionType() ?? u.type();
+        let expectedKey: string = currentType;
+        if (
+          u.type() === UnitType.Construction &&
+          u.constructionType() === UnitType.Airport
+        ) {
+          expectedKey = "airportConstruction";
+        }
+        if (expectedKey === unitType) {
+          this.handleUnitRendering(u);
+        }
+      });
     };
   }
 
