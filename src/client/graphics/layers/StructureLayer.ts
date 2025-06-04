@@ -6,6 +6,7 @@ import { TransformHandler } from "../TransformHandler";
 import { Layer } from "./Layer";
 import { UnitInfoModal } from "./UnitInfoModal";
 
+import airportBuildingIcon from "../../../../resources/images/AirportIconWhite.svg";
 import cityIcon from "../../../../resources/images/buildings/cityAlt1.png";
 import shieldIcon from "../../../../resources/images/buildings/fortAlt2.png";
 import anchorIcon from "../../../../resources/images/buildings/port1.png";
@@ -86,6 +87,12 @@ export class StructureLayer implements Layer {
     },
     [UnitType.Factory]: {
       icon: factoryIcon,
+      borderRadius: 8.525,
+      territoryRadius: 6.525,
+      borderType: UnitBorderType.Round,
+    },
+    [UnitType.Airport]: {
+      icon: airportBuildingIcon,
       borderRadius: 8.525,
       territoryRadius: 6.525,
       borderType: UnitBorderType.Round,
