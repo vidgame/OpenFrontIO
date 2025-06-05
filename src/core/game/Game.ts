@@ -142,6 +142,7 @@ export enum UnitType {
   HydrogenBomb = "Hydrogen Bomb",
   TradeShip = "Trade Ship",
   TradePlane = "Trade Plane",
+  WarPlane = "War Plane",
   MissileSilo = "Missile Silo",
   DefensePost = "Defense Post",
   SAMLauncher = "SAM Launcher",
@@ -164,6 +165,10 @@ export interface UnitParamsMap {
   };
 
   [UnitType.Warship]: {
+    patrolTile: TileRef;
+  };
+
+  [UnitType.WarPlane]: {
     patrolTile: TileRef;
   };
 

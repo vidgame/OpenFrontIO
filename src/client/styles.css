@@ -379,6 +379,11 @@ label.option-card:hover {
     cover;
 }
 
+#helpModal .warplane-icon {
+  mask: url("../../resources/images/FighterIconWhite.svg") no-repeat center /
+    cover;
+}
+
 #helpModal .missile-silo-icon {
   mask: url("../../resources/images/MissileSiloIconWhite.svg") no-repeat
     center / cover;

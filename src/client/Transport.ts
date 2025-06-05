@@ -154,6 +154,13 @@ export class MoveWarshipIntentEvent implements GameEvent {
   ) {}
 }
 
+export class MoveWarPlaneIntentEvent implements GameEvent {
+  constructor(
+    public readonly unitId: number,
+    public readonly tile: number,
+  ) {}
+}
+
 export class Transport {
   private socket: WebSocket | null = null;
 
@@ -224,6 +231,9 @@ export class Transport {
 
     this.eventBus.on(MoveWarshipIntentEvent, (e) => {
       this.onMoveWarshipEvent(e);
+    });
+    this.eventBus.on(MoveWarPlaneIntentEvent, (e) => {
+      this.onMoveWarPlaneEvent(e);
     });
   }
 
@@ -579,6 +589,15 @@ export class Transport {
   private onMoveWarshipEvent(event: MoveWarshipIntentEvent) {
     this.sendIntent({
       type: "move_warship",
+      clientID: this.lobbyConfig.clientID,
+      unitId: event.unitId,
+      tile: event.tile,
+    });
+  }
+
+  private onMoveWarPlaneEvent(event: MoveWarPlaneIntentEvent) {
+    this.sendIntent({
+      type: "move_warplane",
       clientID: this.lobbyConfig.clientID,
       unitId: event.unitId,
       tile: event.tile,

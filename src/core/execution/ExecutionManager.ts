@@ -15,6 +15,7 @@ import { DonateTroopsExecution } from "./DonateTroopExecution";
 import { EmbargoExecution } from "./EmbargoExecution";
 import { EmojiExecution } from "./EmojiExecution";
 import { FakeHumanExecution } from "./FakeHumanExecution";
+import { MoveWarPlaneExecution } from "./MoveWarPlaneExecution";
 import { MoveWarshipExecution } from "./MoveWarshipExecution";
 import { NoOpExecution } from "./NoOpExecution";
 import { QuickChatExecution } from "./QuickChatExecution";
@@ -64,6 +65,8 @@ export class Executor {
         return new BoatRetreatExecution(playerID, intent.unitID);
       case "move_warship":
         return new MoveWarshipExecution(player, intent.unitId, intent.tile);
+      case "move_warplane":
+        return new MoveWarPlaneExecution(player, intent.unitId, intent.tile);
       case "spawn":
         return new SpawnExecution(
           player.info(),

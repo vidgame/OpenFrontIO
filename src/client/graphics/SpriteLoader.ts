@@ -6,6 +6,7 @@ import samMissileSprite from "../../../resources/sprites/samMissile.png";
 import tradePlaneSprite from "../../../resources/sprites/tradeplane.svg";
 import tradeShipSprite from "../../../resources/sprites/tradeship.png";
 import transportShipSprite from "../../../resources/sprites/transportship.png";
+import warPlaneSprite from "../../../resources/sprites/warplane.svg";
 import warshipSprite from "../../../resources/sprites/warship.png";
 import { Theme } from "../../core/configuration/Config";
 import { UnitType } from "../../core/game/Game";
@@ -19,6 +20,7 @@ const SPRITE_CONFIG: Partial<Record<UnitType, string>> = {
   [UnitType.HydrogenBomb]: hydrogenBombSprite,
   [UnitType.TradeShip]: tradeShipSprite,
   [UnitType.TradePlane]: tradePlaneSprite,
+  [UnitType.WarPlane]: warPlaneSprite,
   [UnitType.MIRV]: mirvSprite,
 };
 
