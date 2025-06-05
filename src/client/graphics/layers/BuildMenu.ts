@@ -4,6 +4,7 @@ import airportIcon from "../../../../resources/images/AirportIconWhite.svg";
 import warshipIcon from "../../../../resources/images/BattleshipIconWhite.svg";
 import cityIcon from "../../../../resources/images/CityIconWhite.svg";
 import factoryIcon from "../../../../resources/images/FactoryIconWhite.svg";
+import warplaneIcon from "../../../../resources/images/FighterIconWhite.svg";
 import goldCoinIcon from "../../../../resources/images/GoldCoinIcon.svg";
 import mirvIcon from "../../../../resources/images/MIRVIcon.svg";
 import missileSiloIcon from "../../../../resources/images/MissileSiloIconWhite.svg";
@@ -57,6 +58,13 @@ const buildTable: BuildItemDisplay[][] = [
       icon: warshipIcon,
       description: "build_menu.desc.warship",
       key: "unit_type.warship",
+      countable: true,
+    },
+    {
+      unitType: UnitType.WarPlane,
+      icon: warplaneIcon,
+      description: "build_menu.desc.warplane",
+      key: "unit_type.warplane",
       countable: true,
     },
     {
