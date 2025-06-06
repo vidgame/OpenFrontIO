@@ -319,17 +319,19 @@ export class RadialMenu implements Layer {
     if (this.isVisible) {
       this.hideRadialMenu();
       return;
-    } else {
-      this.showRadialMenu(event.x, event.y);
     }
+
     this.disableAllButtons();
-    this.clickedCell = this.transformHandler.screenToWorldCoordinates(
+    const cell = this.transformHandler.screenToWorldCoordinates(
       event.x,
       event.y,
     );
-    if (!this.g.isValidCoord(this.clickedCell.x, this.clickedCell.y)) {
+    if (!this.g.isValidCoord(cell.x, cell.y)) {
+      this.clickedCell = null;
       return;
     }
+    this.clickedCell = cell;
+    this.showRadialMenu(event.x, event.y);
     const tile = this.g.ref(this.clickedCell.x, this.clickedCell.y);
     this.originalTileOwner = this.g.owner(tile);
     if (this.g.inSpawnPhase()) {
