@@ -237,6 +237,9 @@ export class NukeExecution implements Execution {
 
     const outer2 = magnitude.outer * magnitude.outer;
     for (const unit of this.mg.units()) {
+      if (unit === this.nuke) {
+        continue;
+      }
       if (
         unit.type() !== UnitType.AtomBomb &&
         unit.type() !== UnitType.HydrogenBomb &&
