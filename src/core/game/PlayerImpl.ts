@@ -776,6 +776,8 @@ export class PlayerImpl implements Player {
       case UnitType.AtomBomb:
       case UnitType.HydrogenBomb:
         return this.nukeSpawn(targetTile);
+      case UnitType.PlaneBomb:
+        return this.planeBombSpawn(targetTile);
       case UnitType.MIRVWarhead:
         return targetTile;
       case UnitType.Port:
@@ -873,6 +875,18 @@ export class PlayerImpl implements Player {
       return false;
     }
     return spawns[0].tile();
+  }
+
+  planeBombSpawn(tile: TileRef): TileRef | false {
+    const planes = this.units(UnitType.WarPlane).sort(
+      (a, b) =>
+        this.mg.manhattanDist(a.tile(), tile) -
+        this.mg.manhattanDist(b.tile(), tile),
+    );
+    if (planes.length === 0) {
+      return false;
+    }
+    return planes[0].tile();
   }
 
   landBasedStructureSpawn(

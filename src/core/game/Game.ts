@@ -140,6 +140,7 @@ export enum UnitType {
   Port = "Port",
   AtomBomb = "Atom Bomb",
   HydrogenBomb = "Hydrogen Bomb",
+  PlaneBomb = "Plane Bomb",
   TradeShip = "Trade Ship",
   TradePlane = "Trade Plane",
   WarPlane = "War Plane",
@@ -186,6 +187,10 @@ export interface UnitParamsMap {
     targetTile?: number;
   };
 
+  [UnitType.PlaneBomb]: {
+    targetTile?: number;
+  };
+
   [UnitType.TradeShip]: {
     targetUnit: Unit;
     lastSetSafeFromPirates?: number;
@@ -226,6 +231,7 @@ export type AllUnitParams = UnitParamsMap[keyof UnitParamsMap];
 export const nukeTypes = [
   UnitType.AtomBomb,
   UnitType.HydrogenBomb,
+  UnitType.PlaneBomb,
   UnitType.MIRVWarhead,
   UnitType.MIRV,
 ] as UnitType[];

@@ -96,6 +96,7 @@
     "build_atom_desc": "Petite bombe explosive qui détruit le territoire, les bâtiments, les navires et les bateaux. Apparaît depuis le Silo à missiles le plus proche et atterrit dans la zone cliquée.",
     "build_hydrogen": "Bombe à hydrogène",
     "build_hydrogen_desc": "Grande bombe explosive. Apparaît depuis le Silo à Missiles le plus proche et atterrit dans la zone cliquée.",
+    "build_plane_bomb": "Nécessite un avion de guerre. Lâche une bombe nucléaire inarrêtable.",
     "build_mirv": "MIRV",
     "build_mirv_desc": "La bombe la plus puissante du jeu. Se divise en plus petites bombes qui couvriront une vaste zone du territoire. Ne fait des dégâts qu'au joueur sur lequel vous avez cliqué pour la construire. Apparaît depuis le Silo à missiles le plus proche et atterrit dans la zone cliquée.",
     "player_icons": "Icônes des joueurs",
@@ -222,6 +223,7 @@
     "sam_launcher": "Lanceur de SAM",
     "atom_bomb": "Bombe atomique",
     "hydrogen_bomb": "Bombe à hydrogène",
+    "plane_bomb": "Bombe d'avion",
     "mirv": "MIRV",
     "factory": "Usine"
   },
@@ -351,6 +353,7 @@
       "sam_launcher": "Protège contre les bombes nucléaires",
       "warship": "Capture les navires commerciaux, détruit les navires de guerre et les bateaux",
       "warplane": "Attaque les avions ennemis",
+      "plane_bomb": "Bombe lâchée par avion",
       "port": "Envoie des navires commerciaux pour produire de l'or",
       "defense_post": "Augmente les défenses des frontières voisines",
       "city": "Augmente la population maximale",

@@ -100,6 +100,7 @@ export class ConstructionExecution implements Execution {
     switch (this.constructionType) {
       case UnitType.AtomBomb:
       case UnitType.HydrogenBomb:
+      case UnitType.PlaneBomb:
         this.mg.addExecution(
           new NukeExecution(this.constructionType, player.id(), this.tile),
         );

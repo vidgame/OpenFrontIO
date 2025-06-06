@@ -1,5 +1,8 @@
 import { Colord } from "colord";
-import atomBombSprite from "../../../resources/sprites/atombomb.png";
+import {
+  default as atomBombSprite,
+  default as planeBombSprite,
+} from "../../../resources/sprites/atombomb.png";
 import hydrogenBombSprite from "../../../resources/sprites/hydrogenbomb.png";
 import mirvSprite from "../../../resources/sprites/mirv2.png";
 import samMissileSprite from "../../../resources/sprites/samMissile.png";
@@ -18,6 +21,7 @@ const SPRITE_CONFIG: Partial<Record<UnitType, string>> = {
   [UnitType.SAMMissile]: samMissileSprite,
   [UnitType.AtomBomb]: atomBombSprite,
   [UnitType.HydrogenBomb]: hydrogenBombSprite,
+  [UnitType.PlaneBomb]: planeBombSprite,
   [UnitType.TradeShip]: tradeShipSprite,
   [UnitType.TradePlane]: tradePlaneSprite,
   [UnitType.WarPlane]: warPlaneSprite,
