@@ -482,7 +482,21 @@ export class UnitLayer implements Layer {
   }
 
   private handleTradePlaneEvent(unit: UnitView) {
-    this.drawSprite(unit);
+    let angle = 0;
+    const targetId = unit.targetUnitId();
+    let dstTile: TileRef | undefined;
+    if (targetId !== undefined) {
+      const dstUnit = this.game.unit(targetId);
+      dstTile = dstUnit?.tile();
+    } else {
+      dstTile = unit.targetTile();
+    }
+    if (dstTile !== undefined) {
+      const dx = this.game.x(dstTile) - this.game.x(unit.tile());
+      const dy = this.game.y(dstTile) - this.game.y(unit.tile());
+      angle = Math.atan2(dy, dx);
+    }
+    this.drawSprite(unit, undefined, angle);
   }
 
   private handleBoatEvent(unit: UnitView) {
@@ -542,7 +556,11 @@ export class UnitLayer implements Layer {
     context.clearRect(x, y, 1, 1);
   }
 
-  drawSprite(unit: UnitView, customTerritoryColor?: Colord) {
+  drawSprite(
+    unit: UnitView,
+    customTerritoryColor?: Colord,
+    rotation: number = 0,
+  ) {
     if (!isSpriteReady(unit.type())) {
       return; // sprite still loading
     }
@@ -587,13 +605,19 @@ export class UnitLayer implements Layer {
     );
 
     if (unit.isActive()) {
+      this.context.save();
+      this.context.translate(x, y);
+      if (rotation !== 0) {
+        this.context.rotate(rotation);
+      }
       this.context.drawImage(
         sprite,
-        Math.round(x - sprite.width / 2),
-        Math.round(y - sprite.height / 2),
+        Math.round(-sprite.width / 2),
+        Math.round(-sprite.height / 2),
         sprite.width,
         sprite.width,
       );
+      this.context.restore();
     }
   }
 }
