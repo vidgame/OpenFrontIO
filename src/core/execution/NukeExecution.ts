@@ -242,6 +242,7 @@ export class NukeExecution implements Execution {
         unit.type() !== UnitType.HydrogenBomb &&
         unit.type() !== UnitType.MIRVWarhead &&
         unit.type() !== UnitType.MIRV &&
+        unit.type() !== UnitType.PlaneBomb &&
         (this.nuke.type() !== UnitType.PlaneBomb ||
           (unit.type() !== UnitType.WarPlane &&
             unit.type() !== UnitType.TradePlane))
