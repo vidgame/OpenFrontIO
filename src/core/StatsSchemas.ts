@@ -4,6 +4,7 @@ import { UnitType } from "./game/Game";
 export const BombUnitSchema = z.union([
   z.literal("abomb"),
   z.literal("hbomb"),
+  z.literal("pbomb"),
   z.literal("mirv"),
   z.literal("mirvw"),
 ]);
@@ -11,12 +12,14 @@ export type BombUnit = z.infer<typeof BombUnitSchema>;
 export type NukeType =
   | UnitType.AtomBomb
   | UnitType.HydrogenBomb
+  | UnitType.PlaneBomb
   | UnitType.MIRV
   | UnitType.MIRVWarhead;
 
 export const unitTypeToBombUnit = {
   [UnitType.AtomBomb]: "abomb",
   [UnitType.HydrogenBomb]: "hbomb",
+  [UnitType.PlaneBomb]: "pbomb",
   [UnitType.MIRV]: "mirv",
   [UnitType.MIRVWarhead]: "mirvw",
 } as const satisfies Record<NukeType, BombUnit>;

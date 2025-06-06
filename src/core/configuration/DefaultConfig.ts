@@ -354,6 +354,14 @@ export class DefaultConfig implements Config {
               : 5_000_000n,
           territoryBound: false,
         };
+      case UnitType.PlaneBomb:
+        return {
+          cost: (p: Player) =>
+            p.type() === PlayerType.Human && this.infiniteGold()
+              ? 0n
+              : 750_000n,
+          territoryBound: false,
+        };
       case UnitType.MIRV:
         return {
           cost: (p: Player) =>
@@ -760,6 +768,8 @@ export class DefaultConfig implements Config {
         return { inner: 12, outer: 30 };
       case UnitType.HydrogenBomb:
         return { inner: 80, outer: 100 };
+      case UnitType.PlaneBomb:
+        return { inner: 12, outer: 30 };
     }
     throw new Error(`Unknown nuke type: ${unitType}`);
   }
