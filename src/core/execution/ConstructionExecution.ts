@@ -19,6 +19,7 @@ import { MissileSiloExecution } from "./MissileSiloExecution";
 import { NukeExecution } from "./NukeExecution";
 import { PortExecution } from "./PortExecution";
 import { SAMLauncherExecution } from "./SAMLauncherExecution";
+import { WarPlaneExecution } from "./WarPlaneExecution";
 import { WarshipExecution } from "./WarshipExecution";
 
 export class ConstructionExecution implements Execution {
@@ -109,6 +110,11 @@ export class ConstructionExecution implements Execution {
       case UnitType.Warship:
         this.mg.addExecution(
           new WarshipExecution({ owner: player, patrolTile: this.tile }),
+        );
+        break;
+      case UnitType.WarPlane:
+        this.mg.addExecution(
+          new WarPlaneExecution({ owner: player, patrolTile: this.tile }),
         );
         break;
       case UnitType.Port:

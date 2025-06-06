@@ -10,7 +10,10 @@ import {
   MouseUpEvent,
   UnitSelectionEvent,
 } from "../../InputHandler";
-import { MoveWarshipIntentEvent } from "../../Transport";
+import {
+  MoveWarPlaneIntentEvent,
+  MoveWarshipIntentEvent,
+} from "../../Transport";
 import { TransformHandler } from "../TransformHandler";
 import { Layer } from "./Layer";
 
@@ -48,6 +51,7 @@ export class UnitLayer implements Layer {
 
   // Configuration for unit selection
   private readonly WARSHIP_SELECTION_RADIUS = 10; // Radius in game cells for warship selection hit zone
+  private readonly WARPLANE_SELECTION_RADIUS = 10;
 
   constructor(
     private game: GameView,
@@ -109,6 +113,27 @@ export class UnitLayer implements Layer {
       });
   }
 
+  private findWarPlanesNearCell(cell: { x: number; y: number }): UnitView[] {
+    if (!this.game.isValidCoord(cell.x, cell.y)) {
+      return [];
+    }
+    const clickRef = this.game.ref(cell.x, cell.y);
+    return this.game
+      .units(UnitType.WarPlane)
+      .filter(
+        (unit) =>
+          unit.isActive() &&
+          unit.owner() === this.game.myPlayer() &&
+          this.game.manhattanDist(unit.tile(), clickRef) <=
+            this.WARPLANE_SELECTION_RADIUS,
+      )
+      .sort((a, b) => {
+        const distA = this.game.manhattanDist(a.tile(), clickRef);
+        const distB = this.game.manhattanDist(b.tile(), clickRef);
+        return distA - distB;
+      });
+  }
+
   private onMouseUp(event: MouseUpEvent) {
     // Convert screen coordinates to world coordinates
     const cell = this.transformHandler.screenToWorldCoordinates(
@@ -116,21 +141,26 @@ export class UnitLayer implements Layer {
       event.y,
     );
 
-    // Find warships near this cell, sorted by distance
     const nearbyWarships = this.findWarshipsNearCell(cell);
+    const nearbyWarPlanes = this.findWarPlanesNearCell(cell);
 
     if (this.selectedUnit) {
       const clickRef = this.game.ref(cell.x, cell.y);
-      if (this.game.isOcean(clickRef)) {
+      if (
+        (this.selectedUnit.type() === UnitType.Warship &&
+          this.game.isOcean(clickRef)) ||
+        this.selectedUnit.type() === UnitType.WarPlane
+      ) {
         this.eventBus.emit(
-          new MoveWarshipIntentEvent(this.selectedUnit.id(), clickRef),
+          this.selectedUnit.type() === UnitType.Warship
+            ? new MoveWarshipIntentEvent(this.selectedUnit.id(), clickRef)
+            : new MoveWarPlaneIntentEvent(this.selectedUnit.id(), clickRef),
         );
       }
       // Deselect
       this.eventBus.emit(new UnitSelectionEvent(this.selectedUnit, false));
-    } else if (nearbyWarships.length > 0) {
-      // Toggle selection of the closest warship
-      const clickedUnit = nearbyWarships[0];
+    } else if (nearbyWarships.length > 0 || nearbyWarPlanes.length > 0) {
+      const clickedUnit = nearbyWarships[0] ?? nearbyWarPlanes[0];
       this.eventBus.emit(new UnitSelectionEvent(clickedUnit, true));
     }
   }
@@ -282,6 +312,9 @@ export class UnitLayer implements Layer {
       case UnitType.TradePlane:
         this.handleTradePlaneEvent(unit);
         break;
+      case UnitType.WarPlane:
+        this.handleWarPlaneEvent(unit);
+        break;
       case UnitType.MIRVWarhead:
         this.handleMIRVWarhead(unit);
         break;
@@ -294,6 +327,14 @@ export class UnitLayer implements Layer {
   }
 
   private handleWarShipEvent(unit: UnitView) {
+    if (unit.targetUnitId()) {
+      this.drawSprite(unit, colord({ r: 200, b: 0, g: 0 }));
+    } else {
+      this.drawSprite(unit);
+    }
+  }
+
+  private handleWarPlaneEvent(unit: UnitView) {
     if (unit.targetUnitId()) {
       this.drawSprite(unit, colord({ r: 200, b: 0, g: 0 }));
     } else {

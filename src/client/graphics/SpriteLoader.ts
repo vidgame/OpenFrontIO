@@ -6,6 +6,7 @@ import samMissileSprite from "../../../resources/sprites/samMissile.png";
 import tradePlaneSprite from "../../../resources/sprites/tradeplane.svg";
 import tradeShipSprite from "../../../resources/sprites/tradeship.png";
 import transportShipSprite from "../../../resources/sprites/transportship.png";
+import warPlaneSprite from "../../../resources/sprites/warplane.svg";
 import warshipSprite from "../../../resources/sprites/warship.png";
 import { Theme } from "../../core/configuration/Config";
 import { UnitType } from "../../core/game/Game";
@@ -19,6 +20,7 @@ const SPRITE_CONFIG: Partial<Record<UnitType, string>> = {
   [UnitType.HydrogenBomb]: hydrogenBombSprite,
   [UnitType.TradeShip]: tradeShipSprite,
   [UnitType.TradePlane]: tradePlaneSprite,
+  [UnitType.WarPlane]: warPlaneSprite,
   [UnitType.MIRV]: mirvSprite,
 };
 
@@ -140,6 +142,15 @@ export const getColoredSprite = (
   const sprite = getSpriteForUnit(unit.type());
   if (sprite === null) {
     throw new Error(`Failed to load sprite for ${unit.type()}`);
+  }
+
+  if (unit.type() === UnitType.WarPlane) {
+    const canvas = document.createElement("canvas");
+    canvas.width = sprite.width;
+    canvas.height = sprite.height;
+    const ctx2 = canvas.getContext("2d")!;
+    ctx2.drawImage(sprite, 0, 0);
+    return canvas;
   }
 
   const coloredCanvas = colorizeCanvas(
