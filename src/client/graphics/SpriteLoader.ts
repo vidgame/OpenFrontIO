@@ -144,6 +144,15 @@ export const getColoredSprite = (
     throw new Error(`Failed to load sprite for ${unit.type()}`);
   }
 
+  if (unit.type() === UnitType.WarPlane) {
+    const canvas = document.createElement("canvas");
+    canvas.width = sprite.width;
+    canvas.height = sprite.height;
+    const ctx2 = canvas.getContext("2d")!;
+    ctx2.drawImage(sprite, 0, 0);
+    return canvas;
+  }
+
   const coloredCanvas = colorizeCanvas(
     sprite,
     territoryColor,
