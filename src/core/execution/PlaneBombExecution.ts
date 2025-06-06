@@ -44,7 +44,7 @@ export class PlaneBombExecution implements Execution {
     }
 
     this.plane.setPatrolTile(this.target);
-    this.plane.setTargetTile(undefined);
+    this.plane.setTargetTile(this.target);
   }
 
   tick(ticks: number): void {
