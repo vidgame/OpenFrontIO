@@ -15,6 +15,7 @@ export class PlaneBombExecution implements Execution {
   private plane: Unit | null = null;
   private active = true;
   private bombDropped = false;
+  private prevPatrolTile: TileRef | undefined;
 
   constructor(
     private readonly playerID: PlayerID,
@@ -43,8 +44,11 @@ export class PlaneBombExecution implements Execution {
       return;
     }
 
+    // Save the previous patrol tile so it can be restored after the run
+    this.prevPatrolTile = this.plane.patrolTile();
+    // Move directly towards the target tile
     this.plane.setPatrolTile(this.target);
-    this.plane.setTargetTile(undefined);
+    this.plane.setTargetTile(this.target);
   }
 
   tick(ticks: number): void {
@@ -65,6 +69,10 @@ export class PlaneBombExecution implements Execution {
         ),
       );
       this.bombDropped = true;
+      if (this.prevPatrolTile !== undefined) {
+        this.plane.setPatrolTile(this.prevPatrolTile);
+      }
+      this.plane.setTargetTile(undefined);
       this.active = false;
     }
   }
