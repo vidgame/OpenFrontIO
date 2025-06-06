@@ -18,6 +18,7 @@ const SPRITE_CONFIG: Partial<Record<UnitType, string>> = {
   [UnitType.SAMMissile]: samMissileSprite,
   [UnitType.AtomBomb]: atomBombSprite,
   [UnitType.HydrogenBomb]: hydrogenBombSprite,
+  [UnitType.PlaneBomb]: atomBombSprite,
   [UnitType.TradeShip]: tradeShipSprite,
   [UnitType.TradePlane]: tradePlaneSprite,
   [UnitType.WarPlane]: warPlaneSprite,

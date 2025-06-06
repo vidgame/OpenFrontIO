@@ -141,6 +141,14 @@ export class NukeExecution implements Execution {
             target.id(),
           );
           this.breakAlliances(this.tilesToDestroy());
+        } else if (this.type === UnitType.PlaneBomb) {
+          this.mg.displayIncomingUnit(
+            this.nuke.id(),
+            `${this.player.name()} - plane bomb inbound`,
+            MessageType.ERROR,
+            target.id(),
+          );
+          this.breakAlliances(this.tilesToDestroy());
         }
 
         // Record stats
@@ -150,11 +158,13 @@ export class NukeExecution implements Execution {
       }
 
       // after sending a nuke set the missilesilo on cooldown
-      const silo = this.player
-        .units(UnitType.MissileSilo)
-        .find((silo) => silo.tile() === spawn);
-      if (silo) {
-        silo.launch();
+      if (this.type !== UnitType.PlaneBomb) {
+        const silo = this.player
+          .units(UnitType.MissileSilo)
+          .find((silo) => silo.tile() === spawn);
+        if (silo) {
+          silo.launch();
+        }
       }
       return;
     }
@@ -231,7 +241,11 @@ export class NukeExecution implements Execution {
         unit.type() !== UnitType.AtomBomb &&
         unit.type() !== UnitType.HydrogenBomb &&
         unit.type() !== UnitType.MIRVWarhead &&
-        unit.type() !== UnitType.MIRV
+        unit.type() !== UnitType.MIRV &&
+        unit.type() !== UnitType.PlaneBomb &&
+        (this.nuke.type() !== UnitType.PlaneBomb ||
+          (unit.type() !== UnitType.WarPlane &&
+            unit.type() !== UnitType.TradePlane))
       ) {
         if (this.mg.euclideanDistSquared(this.dst, unit.tile()) < outer2) {
           unit.delete(true, this.player);

@@ -68,6 +68,13 @@ const buildTable: BuildItemDisplay[][] = [
       countable: true,
     },
     {
+      unitType: UnitType.PlaneBomb,
+      icon: atomBombIcon,
+      description: "build_menu.desc.plane_bomb",
+      key: "unit_type.plane_bomb",
+      countable: false,
+    },
+    {
       unitType: UnitType.Port,
       icon: portIcon,
       description: "build_menu.desc.port",
