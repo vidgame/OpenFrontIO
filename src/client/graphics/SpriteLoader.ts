@@ -1,4 +1,4 @@
-import { Colord } from "colord";
+import { colord, Colord } from "colord";
 import {
   default as atomBombSprite,
   default as planeBombSprite,
