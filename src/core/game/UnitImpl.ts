@@ -286,6 +286,8 @@ export class UnitImpl implements Unit {
       cooldownDuration = this.mg.config().SAMCooldown();
     } else if (this.type() === UnitType.MissileSilo) {
       cooldownDuration = this.mg.config().SiloCooldown();
+    } else if (this.type() === UnitType.WarPlane) {
+      cooldownDuration = this.mg.config().planeBombCooldown();
     } else {
       return undefined;
     }

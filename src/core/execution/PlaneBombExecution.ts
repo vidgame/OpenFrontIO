@@ -30,8 +30,14 @@ export class PlaneBombExecution implements Execution {
       return;
     }
     this.player = mg.player(this.playerID);
+    const cooldown = mg.config().planeBombCooldown();
     const planes = this.player
       .units(UnitType.WarPlane)
+      .filter((p) => {
+        const last = p.lastBombTick();
+        if (p.isInCooldown()) return false;
+        return last === null || mg.ticks() - last >= cooldown;
+      })
       .sort(
         (a, b) =>
           mg.manhattanDist(a.tile(), this.target) -
@@ -49,6 +55,8 @@ export class PlaneBombExecution implements Execution {
     // Move directly towards the target tile
     this.plane.setPatrolTile(this.target);
     this.plane.setTargetTile(this.target);
+    // Mark the plane as preparing to drop a bomb
+    this.plane.setLastBombTick(this.mg.ticks());
   }
 
   tick(ticks: number): void {
@@ -58,6 +66,10 @@ export class PlaneBombExecution implements Execution {
     if (!this.plane.isActive()) {
       this.active = false;
       return;
+    }
+    if (!this.bombDropped) {
+      // Continually update so the client knows the plane is on a bombing run
+      this.plane.setLastBombTick(this.mg.ticks());
     }
     if (!this.bombDropped && this.plane.tile() === this.target) {
       this.mg.addExecution(
@@ -69,6 +81,7 @@ export class PlaneBombExecution implements Execution {
         ),
       );
       this.plane.setLastBombTick(this.mg.ticks());
+      this.plane.launch();
       this.bombDropped = true;
       if (this.prevPatrolTile !== undefined) {
         this.plane.setPatrolTile(this.prevPatrolTile);
