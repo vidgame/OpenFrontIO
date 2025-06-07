@@ -30,8 +30,14 @@ export class PlaneBombExecution implements Execution {
       return;
     }
     this.player = mg.player(this.playerID);
+    const cooldown = mg.config().planeBombCooldown();
     const planes = this.player
       .units(UnitType.WarPlane)
+      .filter((p) => {
+        const last = p.lastBombTick();
+        if (p.isInCooldown()) return false;
+        return last === null || mg.ticks() - last >= cooldown;
+      })
       .sort(
         (a, b) =>
           mg.manhattanDist(a.tile(), this.target) -
@@ -75,6 +81,7 @@ export class PlaneBombExecution implements Execution {
         ),
       );
       this.plane.setLastBombTick(this.mg.ticks());
+      this.plane.launch();
       this.bombDropped = true;
       if (this.prevPatrolTile !== undefined) {
         this.plane.setPatrolTile(this.prevPatrolTile);

@@ -336,7 +336,8 @@ export class UnitLayer implements Layer {
 
   private handleWarPlaneEvent(unit: UnitView) {
     const lastBomb = unit.lastBombTick();
-    const highlight = lastBomb !== null && this.game.ticks() - lastBomb < 5;
+    const cd = this.game.config().planeBombCooldown();
+    const highlight = lastBomb !== null && this.game.ticks() - lastBomb < cd;
     const squareColor = highlight ? colord("#ff0000") : colord("#00ff00");
     this.drawSprite(unit, undefined, 0, squareColor);
   }

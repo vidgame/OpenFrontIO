@@ -240,6 +240,9 @@ export class DefaultConfig implements Config {
   SiloCooldown(): number {
     return 75;
   }
+  planeBombCooldown(): number {
+    return 70;
+  }
 
   defensePostRange(): number {
     return 30;

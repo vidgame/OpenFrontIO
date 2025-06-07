@@ -58,15 +58,17 @@ export class WarPlaneExecution implements Execution {
     if (hasAirport) {
       this.plane.modifyHealth(1);
     }
-
-    this.plane.setTargetUnit(this.findTargetUnit());
+    if (this.plane.isInCooldown()) {
+      this.plane.setTargetUnit(undefined);
+    } else {
+      this.plane.setTargetUnit(this.findTargetUnit());
+      if (this.plane.targetUnit() !== undefined) {
+        this.shootTarget();
+        return;
+      }
+    }
 
     this.patrol();
-
-    if (this.plane.targetUnit() !== undefined) {
-      this.shootTarget();
-      return;
-    }
   }
 
   private findTargetUnit(): Unit | undefined {
