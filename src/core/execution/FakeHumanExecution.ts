@@ -29,7 +29,6 @@ import { BotBehavior } from "./utils/BotBehavior";
 
 export class FakeHumanExecution implements Execution {
   private firstMove = true;
-
   private active = true;
   private random: PseudoRandom;
   private behavior: BotBehavior | null = null;
@@ -365,6 +364,7 @@ export class FakeHumanExecution implements Execution {
   private maybeSendPlaneBomb(other: Player) {
     if (this.player === null) throw new Error("not initialized");
     const player = this.player;
+
     if (player.isOnSameTeam(other)) return;
 
     const planes = player
@@ -374,7 +374,7 @@ export class FakeHumanExecution implements Execution {
 
     const maxBombs = Math.min(
       planes.length,
-      Math.floor(Number(player.gold()) / Number(this.cost(UnitType.PlaneBomb))),
+      Math.floor(Number(player.gold()) / Number(this.cost(UnitType.PlaneBomb)))
     );
     if (maxBombs === 0) return;
 
@@ -384,23 +384,13 @@ export class FakeHumanExecution implements Execution {
       UnitType.DefensePost,
       UnitType.MissileSilo,
       UnitType.Port,
-      UnitType.SAMLauncher,
+      UnitType.SAMLauncher
     );
 
     const candidateTiles: TileRef[] = [];
-    const radius = 10;
     for (const u of structures) {
-      if (
-        sams.some(
-          (sam) => this.mg.manhattanDist(u.tile(), sam.tile()) <= radius,
-        )
-      ) {
-        candidateTiles.push(u.tile());
-      } else {
-        candidateTiles.push(u.tile());
-      }
+      candidateTiles.push(u.tile());
     }
-
     for (let i = 0; i < 10; i++) {
       const rand = this.randTerritoryTile(other);
       if (rand) candidateTiles.push(rand);
@@ -412,13 +402,12 @@ export class FakeHumanExecution implements Execution {
         tile,
         score: this.nukeTileScore(tile, silos, structures),
       }))
-      .filter(({ tile }) => player.canBuild(UnitType.PlaneBomb, tile));
-
-    scored.sort((a, b) => b.score - a.score);
+      .filter(({ tile }) => player.canBuild(UnitType.PlaneBomb, tile))
+      .sort((a, b) => b.score - a.score);
 
     for (const { tile } of scored.slice(0, maxBombs)) {
       this.mg.addExecution(
-        new ConstructionExecution(this.player.id(), tile, UnitType.PlaneBomb),
+        new ConstructionExecution(player.id(), tile, UnitType.PlaneBomb)
       );
     }
   }
@@ -492,8 +481,8 @@ export class FakeHumanExecution implements Execution {
 
     // Don't target near recent targets
     tileValue -= this.lastNukeSent
-      .filter(([_tick, tile]) => dist(this.mg, tile))
-      .map((_) => 1_000_000)
+      .filter(([_tick, t]) => dist(this.mg, t))
+      .map(() => 1_000_000)
       .reduce((prev, cur) => prev + cur, 0);
 
     return tileValue;
@@ -563,8 +552,7 @@ export class FakeHumanExecution implements Execution {
     if (tile === null) {
       return;
     }
-    const canBuild = this.player.canBuild(type, tile);
-    if (canBuild === false) {
+    if (!this.player.canBuild(type, tile)) {
       return;
     }
     this.mg.addExecution(
@@ -589,8 +577,7 @@ export class FakeHumanExecution implements Execution {
       if (targetTile === null) {
         return false;
       }
-      const canBuild = this.player.canBuild(UnitType.Warship, targetTile);
-      if (canBuild === false) {
+      if (!this.player.canBuild(UnitType.Warship, targetTile)) {
         consolex.warn("cannot spawn destroyer");
         return false;
       }
@@ -619,8 +606,7 @@ export class FakeHumanExecution implements Execution {
 
     const tile = this.randTerritoryTile(this.player);
     if (tile === null) return;
-    const canBuild = this.player.canBuild(UnitType.WarPlane, tile);
-    if (canBuild === false) return;
+    if (!this.player.canBuild(UnitType.WarPlane, tile)) return;
 
     this.mg.addExecution(
       new ConstructionExecution(this.player.id(), tile, UnitType.WarPlane),
@@ -639,7 +625,6 @@ export class FakeHumanExecution implements Execution {
       const randX = this.random.nextInt(boundingBox.min.x, boundingBox.max.x);
       const randY = this.random.nextInt(boundingBox.min.y, boundingBox.max.y);
       if (!this.mg.isOnMap(new Cell(randX, randY))) {
-        // Sanity check should never happen
         continue;
       }
       const randTile = this.mg.ref(randX, randY);
@@ -665,7 +650,6 @@ export class FakeHumanExecution implements Execution {
         continue;
       }
       const tile = this.mg.ref(randX, randY);
-      // Sanity check
       if (!this.mg.isOcean(tile)) {
         continue;
       }
@@ -689,7 +673,6 @@ export class FakeHumanExecution implements Execution {
     }
 
     const src = this.random.randElement(oceanShore);
-
     const dst = this.randOceanShoreTile(src, 150);
     if (dst === null) {
       return;
@@ -704,7 +687,6 @@ export class FakeHumanExecution implements Execution {
         null,
       ),
     );
-    return;
   }
 
   randomLand(): TileRef | null {
