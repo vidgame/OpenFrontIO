@@ -364,18 +364,17 @@ export class FakeHumanExecution implements Execution {
 
   private maybeSendPlaneBomb(other: Player) {
     if (this.player === null) throw new Error("not initialized");
-    if (this.player.isOnSameTeam(other)) return;
+    const player = this.player;
+    if (player.isOnSameTeam(other)) return;
 
-    const planes = this.player
+    const planes = player
       .units(UnitType.WarPlane)
       .filter((p) => !p.isInCooldown());
     if (planes.length === 0) return;
 
     const maxBombs = Math.min(
       planes.length,
-      Math.floor(
-        Number(this.player.gold()) / Number(this.cost(UnitType.PlaneBomb)),
-      ),
+      Math.floor(Number(player.gold()) / Number(this.cost(UnitType.PlaneBomb))),
     );
     if (maxBombs === 0) return;
 
@@ -407,13 +406,13 @@ export class FakeHumanExecution implements Execution {
       if (rand) candidateTiles.push(rand);
     }
 
-    const silos = this.player.units(UnitType.MissileSilo);
+    const silos = player.units(UnitType.MissileSilo);
     const scored = Array.from(new Set(candidateTiles))
       .map((tile) => ({
         tile,
         score: this.nukeTileScore(tile, silos, structures),
       }))
-      .filter(({ tile }) => this.player.canBuild(UnitType.PlaneBomb, tile));
+      .filter(({ tile }) => player.canBuild(UnitType.PlaneBomb, tile));
 
     scored.sort((a, b) => b.score - a.score);
 
