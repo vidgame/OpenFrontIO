@@ -63,20 +63,26 @@ export class WarPlaneExecution implements Execution {
       this.plane.modifyHealth(1);
     }
 
-    if (this.plane.isInCooldown()) {
-      // En cooldown, on ne cible personne
+    const lastBomb = this.plane.lastBombTick();
+    const bombing =
+      lastBomb !== null &&
+      !this.plane.isInCooldown() &&
+      this.mg.ticks() - lastBomb < this.mg.config().planeBombCooldown();
+
+    if (this.plane.isInCooldown() || bombing) {
+      // En cooldown ou en train de bombarder, on ne cible personne
       this.plane.setTargetUnit(undefined);
     } else {
       // Sinon on cherche une cible ennemie
       this.plane.setTargetUnit(this.findTargetUnit());
-      if (this.plane.targetUnit() !== undefined) {
-        this.shootTarget();
-        return;  // on sort de tick() si on vient de tirer
-      }
     }
 
-    // Pas d'attaque, on patrouille
+    // Patrouille ou déplacement
     this.patrol();
+
+    if (this.plane.targetUnit() !== undefined) {
+      this.shootTarget();
+    }
   }
 
   private findTargetUnit(): Unit | undefined {
