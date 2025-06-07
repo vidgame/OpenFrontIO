@@ -268,6 +268,7 @@ export class FakeHumanExecution implements Execution {
     if (!enemy) return;
     this.maybeSendEmoji(enemy);
     this.maybeSendNuke(enemy);
+    this.maybeSendPlaneBomb(enemy);
     if (this.player.sharesBorderWith(enemy)) {
       this.behavior.sendAttack(enemy);
     } else {
@@ -337,6 +338,26 @@ export class FakeHumanExecution implements Execution {
     if (bestTile !== null) {
       this.sendNuke(bestTile);
     }
+  }
+
+  private maybeSendPlaneBomb(other: Player) {
+    if (this.player === null) throw new Error("not initialized");
+    if (this.player.isOnSameTeam(other)) return;
+    if (this.player.gold() < this.cost(UnitType.PlaneBomb)) return;
+
+    const sams = other.units(UnitType.SAMLauncher);
+    if (sams.length === 0) return;
+
+    const targetTile = this.random.randElement(sams).tile();
+    if (!this.player.canBuild(UnitType.PlaneBomb, targetTile)) return;
+
+    this.mg.addExecution(
+      new ConstructionExecution(
+        this.player.id(),
+        targetTile,
+        UnitType.PlaneBomb,
+      ),
+    );
   }
 
   private removeOldNukeEvents() {
@@ -441,10 +462,14 @@ export class FakeHumanExecution implements Execution {
       return;
     }
     this.maybeSpawnStructure(UnitType.City, 2);
+    this.maybeSpawnStructure(UnitType.Factory, 1);
+    this.maybeSpawnStructure(UnitType.Airport, 1);
     if (this.maybeSpawnWarship()) {
       return;
     }
     this.maybeSpawnStructure(UnitType.MissileSilo, 1);
+    this.maybeSpawnStructure(UnitType.SAMLauncher, 1);
+    this.maybeSpawnWarPlane();
   }
 
   private maybeSpawnStructure(type: UnitType, maxNum: number) {
@@ -501,6 +526,34 @@ export class FakeHumanExecution implements Execution {
       return true;
     }
     return false;
+  }
+
+  private maybeSpawnWarPlane(): void {
+    if (this.player === null) throw new Error("not initialized");
+    const airports = this.player.units(UnitType.Airport);
+    if (airports.length === 0) return;
+
+    const planes = this.player.units(UnitType.WarPlane);
+    const allowed = this.maxWarPlanes();
+    if (planes.length >= allowed) return;
+
+    if (this.player.gold() < this.cost(UnitType.WarPlane)) return;
+
+    const tile = this.randTerritoryTile(this.player);
+    if (tile === null) return;
+    const canBuild = this.player.canBuild(UnitType.WarPlane, tile);
+    if (canBuild === false) return;
+
+    this.mg.addExecution(
+      new ConstructionExecution(this.player.id(), tile, UnitType.WarPlane),
+    );
+  }
+
+  private maxWarPlanes(): number {
+    if (this.player === null) throw new Error("not initialized");
+    const percent =
+      (this.player.numTilesOwned() / this.mg.numLandTiles()) * 100;
+    return Math.floor(percent / 10);
   }
 
   private randTerritoryTile(p: Player): TileRef | null {
