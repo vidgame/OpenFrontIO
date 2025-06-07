@@ -82,6 +82,7 @@ export interface UnitUpdate {
   constructionType?: UnitType;
   ticksLeftInCooldown?: Tick;
   lastAttackTick?: Tick;
+  lastBombTick?: Tick;
 }
 
 export interface AttackUpdate {
