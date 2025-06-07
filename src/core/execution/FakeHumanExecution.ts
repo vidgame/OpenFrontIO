@@ -53,7 +53,8 @@ export class FakeHumanExecution implements Execution {
     this.random = new PseudoRandom(
       simpleHash(nation.playerInfo.id) + simpleHash(gameID),
     );
-    this.attackRate = this.random.nextInt(40, 80);
+    // Bots act more frequently to launch missiles often
+    this.attackRate = this.random.nextInt(20, 40);
     this.attackTick = this.random.nextInt(0, this.attackRate);
     this.triggerRatio = this.random.nextInt(60, 90) / 100;
     this.reserveRatio = this.random.nextInt(30, 60) / 100;
@@ -267,8 +268,8 @@ export class FakeHumanExecution implements Execution {
     const enemy = this.behavior.selectEnemy();
     if (!enemy) return;
     this.maybeSendEmoji(enemy);
-    this.maybeSendNuke(enemy);
     this.maybeSendPlaneBomb(enemy);
+    this.maybeSendNuke(enemy);
     if (this.player.sharesBorderWith(enemy)) {
       this.behavior.sendAttack(enemy);
     } else {
@@ -317,8 +318,12 @@ export class FakeHumanExecution implements Execution {
     }
     const allTiles = randomTiles.concat(structureTiles);
 
-    let bestTile: TileRef | null = null;
-    let bestValue = 0;
+    type Candidate = {
+      tile: TileRef;
+      value: number;
+      type: UnitType.AtomBomb | UnitType.HydrogenBomb;
+    };
+    let best: Candidate | null = null;
     this.removeOldNukeEvents();
     outer: for (const tile of new Set(allTiles)) {
       if (tile === null) continue;
@@ -330,17 +335,29 @@ export class FakeHumanExecution implements Execution {
       }
       if (!this.player.canBuild(UnitType.AtomBomb, tile)) continue;
       const value = this.nukeTileScore(tile, silos, structures);
-      if (value > bestValue) {
-        bestTile = tile;
-        bestValue = value;
+      if (best === null || value > best.value) {
+        best = { tile, value, type: UnitType.AtomBomb };
+      }
+
+      if (this.player.gold() >= this.cost(UnitType.HydrogenBomb)) {
+        const ratio = this.landRatio(
+          tile,
+          this.mg.config().nukeMagnitudes(UnitType.HydrogenBomb).outer,
+        );
+        if (ratio >= 0.7) {
+          const val = value; // reuse same scoring
+          if (best === null || val > best.value) {
+            best = { tile, value: val, type: UnitType.HydrogenBomb };
+          }
+        }
       }
     }
-    if (bestTile !== null) {
-      const nukeType = this.chooseNukeType(other);
-      if (this.player.gold() >= this.cost(nukeType)) {
-        this.sendNuke(bestTile, nukeType);
+    if (best !== null) {
+      const enough = this.player.gold() >= this.cost(best.type);
+      if (enough) {
+        this.sendNuke(best.tile, best.type);
       } else if (this.player.gold() >= this.cost(UnitType.AtomBomb)) {
-        this.sendNuke(bestTile, UnitType.AtomBomb);
+        this.sendNuke(best.tile, UnitType.AtomBomb);
       }
     }
   }
@@ -348,11 +365,21 @@ export class FakeHumanExecution implements Execution {
   private maybeSendPlaneBomb(other: Player) {
     if (this.player === null) throw new Error("not initialized");
     if (this.player.isOnSameTeam(other)) return;
-    if (this.player.gold() < this.cost(UnitType.PlaneBomb)) return;
+
+    const planes = this.player
+      .units(UnitType.WarPlane)
+      .filter((p) => !p.isInCooldown());
+    if (planes.length === 0) return;
+
+    const maxBombs = Math.min(
+      planes.length,
+      Math.floor(
+        Number(this.player.gold()) / Number(this.cost(UnitType.PlaneBomb)),
+      ),
+    );
+    if (maxBombs === 0) return;
 
     const sams = other.units(UnitType.SAMLauncher);
-    if (sams.length === 0) return;
-
     const structures = other.units(
       UnitType.City,
       UnitType.DefensePost,
@@ -364,37 +391,35 @@ export class FakeHumanExecution implements Execution {
     const candidateTiles: TileRef[] = [];
     const radius = 10;
     for (const u of structures) {
-      for (const sam of sams) {
-        if (this.mg.manhattanDist(u.tile(), sam.tile()) <= radius) {
-          candidateTiles.push(u.tile());
-          break;
-        }
+      if (
+        sams.some(
+          (sam) => this.mg.manhattanDist(u.tile(), sam.tile()) <= radius,
+        )
+      ) {
+        candidateTiles.push(u.tile());
+      } else {
+        candidateTiles.push(u.tile());
       }
     }
 
-    if (candidateTiles.length === 0) {
-      candidateTiles.push(...sams.map((s) => s.tile()));
+    for (let i = 0; i < 10; i++) {
+      const rand = this.randTerritoryTile(other);
+      if (rand) candidateTiles.push(rand);
     }
 
-    let bestTile: TileRef | null = null;
-    let bestValue = 0;
     const silos = this.player.units(UnitType.MissileSilo);
-    for (const tile of candidateTiles) {
-      if (!this.player.canBuild(UnitType.PlaneBomb, tile)) continue;
-      const val = this.nukeTileScore(tile, silos, structures);
-      if (val > bestValue) {
-        bestTile = tile;
-        bestValue = val;
-      }
-    }
+    const scored = Array.from(new Set(candidateTiles))
+      .map((tile) => ({
+        tile,
+        score: this.nukeTileScore(tile, silos, structures),
+      }))
+      .filter(({ tile }) => this.player.canBuild(UnitType.PlaneBomb, tile));
 
-    if (bestTile !== null) {
+    scored.sort((a, b) => b.score - a.score);
+
+    for (const { tile } of scored.slice(0, maxBombs)) {
       this.mg.addExecution(
-        new ConstructionExecution(
-          this.player.id(),
-          bestTile,
-          UnitType.PlaneBomb,
-        ),
+        new ConstructionExecution(this.player.id(), tile, UnitType.PlaneBomb),
       );
     }
   }
@@ -420,26 +445,15 @@ export class FakeHumanExecution implements Execution {
     this.mg.addExecution(new NukeExecution(type, this.player.id(), tile));
   }
 
-  private chooseNukeType(
-    enemy: Player,
-  ): UnitType.AtomBomb | UnitType.HydrogenBomb {
-    if (this.player === null) throw new Error("not initialized");
-    const costAtom = this.cost(UnitType.AtomBomb);
-    const costHydrogen = this.cost(UnitType.HydrogenBomb);
-    const gold = this.player.gold();
-
-    if (gold < costHydrogen) {
-      return UnitType.AtomBomb;
+  private landRatio(tile: TileRef, radius: number): number {
+    let land = 0;
+    let total = 0;
+    const dist = euclDistFN(tile, radius, false);
+    for (const t of this.mg.bfs(tile, dist)) {
+      total++;
+      if (this.mg.isLand(t)) land++;
     }
-
-    const needHeavy = this.player.troops() < enemy.troops();
-    const abundantGold = gold > costHydrogen * 4n;
-
-    if ((abundantGold || needHeavy) && this.random.chance(5)) {
-      return UnitType.HydrogenBomb;
-    }
-
-    return UnitType.AtomBomb;
+    return land / Math.max(1, total);
   }
 
   private nukeTileScore(tile: TileRef, silos: Unit[], targets: Unit[]): number {
@@ -466,13 +480,16 @@ export class FakeHumanExecution implements Execution {
       .reduce((prev, cur) => prev + cur, 0);
 
     // Prefer tiles that are closer to a silo
-    const siloTiles = silos.map((u) => u.tile());
-    const result = closestTwoTiles(this.mg, siloTiles, [tile]);
-    if (result === null) throw new Error("Missing result");
-    const { x: closestSilo } = result;
-    const distanceSquared = this.mg.euclideanDistSquared(tile, closestSilo);
-    const distanceToClosestSilo = Math.sqrt(distanceSquared);
-    tileValue -= distanceToClosestSilo * 30;
+    if (silos.length > 0) {
+      const siloTiles = silos.map((u) => u.tile());
+      const result = closestTwoTiles(this.mg, siloTiles, [tile]);
+      if (result !== null) {
+        const { x: closestSilo } = result;
+        const distanceSquared = this.mg.euclideanDistSquared(tile, closestSilo);
+        const distanceToClosestSilo = Math.sqrt(distanceSquared);
+        tileValue -= distanceToClosestSilo * 30;
+      }
+    }
 
     // Don't target near recent targets
     tileValue -= this.lastNukeSent
@@ -613,9 +630,8 @@ export class FakeHumanExecution implements Execution {
 
   private maxWarPlanes(): number {
     if (this.player === null) throw new Error("not initialized");
-    const percent =
-      (this.player.numTilesOwned() / this.mg.numLandTiles()) * 100;
-    return Math.floor(percent / 10);
+    // Allow one war plane for every 75k troops
+    return Math.floor(this.player.troops() / 75_000);
   }
 
   private randTerritoryTile(p: Player): TileRef | null {
