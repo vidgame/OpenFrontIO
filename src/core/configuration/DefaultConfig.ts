@@ -448,7 +448,15 @@ export class DefaultConfig implements Config {
           cost: (p: Player) =>
             p.type() === PlayerType.Human && this.infiniteGold()
               ? 0n
-              : 250_000n,
+              : (() => {
+                  const num = p.unitsIncludingConstruction(
+                    UnitType.Factory,
+                  ).length;
+                  if (num === 0) return 0n;
+                  if (num === 1) return 250_000n;
+                  if (num === 2) return 500_000n;
+                  return 1_000_000n;
+                })(),
           territoryBound: true,
           constructionDuration: this.instantBuild() ? 0 : 2 * 10,
         };
