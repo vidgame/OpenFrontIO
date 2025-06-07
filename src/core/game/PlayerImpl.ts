@@ -878,11 +878,20 @@ export class PlayerImpl implements Player {
   }
 
   planeBombSpawn(tile: TileRef): TileRef | false {
-    const planes = this.units(UnitType.WarPlane).sort(
-      (a, b) =>
-        this.mg.manhattanDist(a.tile(), tile) -
-        this.mg.manhattanDist(b.tile(), tile),
-    );
+    const cd = this.mg.config().planeBombCooldown();
+    const planes = this.units(UnitType.WarPlane)
+      .filter((p) => {
+        if (p.isInCooldown()) {
+          return false;
+        }
+        const last = p.lastBombTick();
+        return last === null || this.mg.ticks() - last >= cd;
+      })
+      .sort(
+        (a, b) =>
+          this.mg.manhattanDist(a.tile(), tile) -
+          this.mg.manhattanDist(b.tile(), tile),
+      );
     if (planes.length === 0) {
       return false;
     }

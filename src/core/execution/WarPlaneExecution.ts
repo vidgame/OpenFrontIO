@@ -28,6 +28,7 @@ export class WarPlaneExecution implements Execution {
     this.mg = mg;
     this.random = new PseudoRandom(mg.ticks());
     this.pathfinder = new AirPathFinder(mg, this.random);
+
     if (isUnit(this.input)) {
       this.plane = this.input;
     } else {
@@ -50,24 +51,31 @@ export class WarPlaneExecution implements Execution {
   }
 
   tick(ticks: number): void {
+    // Si l'avion est détruit, on le supprime et on arrête tout
     if (this.plane.health() <= 0) {
       this.plane.delete();
       return;
     }
+
+    // Régénération si on a un aéroport
     const hasAirport = this.plane.owner().units(UnitType.Airport).length > 0;
     if (hasAirport) {
       this.plane.modifyHealth(1);
     }
+
     if (this.plane.isInCooldown()) {
+      // En cooldown, on ne cible personne
       this.plane.setTargetUnit(undefined);
     } else {
+      // Sinon on cherche une cible ennemie
       this.plane.setTargetUnit(this.findTargetUnit());
       if (this.plane.targetUnit() !== undefined) {
         this.shootTarget();
-        return;
+        return;  // on sort de tick() si on vient de tirer
       }
     }
 
+    // Pas d'attaque, on patrouille
     this.patrol();
   }
 
@@ -78,6 +86,7 @@ export class WarPlaneExecution implements Execution {
       [UnitType.TradePlane, UnitType.WarPlane],
     );
     const potential: { unit: Unit; distSquared: number }[] = [];
+
     for (const { unit, distSquared } of units) {
       if (
         unit.owner() === this.plane.owner() ||
@@ -89,6 +98,8 @@ export class WarPlaneExecution implements Execution {
       }
       potential.push({ unit, distSquared });
     }
+
+    // On cible le plus proche
     potential.sort((a, b) => a.distSquared - b.distSquared);
     return potential[0]?.unit;
   }
@@ -106,6 +117,8 @@ export class WarPlaneExecution implements Execution {
         ),
       );
       this.plane.setLastAttackTick(this.mg.ticks());
+
+      // Si la cible est détruite, on la débloque et on désélectionne
       if (!this.plane.targetUnit()!.hasHealth()) {
         this.alreadySentShell.add(this.plane.targetUnit()!);
         this.plane.setTargetUnit(undefined);
@@ -115,6 +128,7 @@ export class WarPlaneExecution implements Execution {
   }
 
   private patrol() {
+    // Choix d'une tuile de patrouille aléatoire si nécessaire
     if (this.plane.targetTile() === undefined) {
       this.plane.setTargetTile(this.randomTile());
       if (this.plane.targetTile() === undefined) {
@@ -122,16 +136,19 @@ export class WarPlaneExecution implements Execution {
       }
     }
 
+    // On avance de deux pas maximum vers la cible
     for (let i = 0; i < 2; i++) {
       const result = this.pathfinder.nextTile(
         this.plane.tile(),
         this.plane.targetTile()!,
       );
       if (result === true) {
+        // Arrivé : reset et on reste sur place
         this.plane.setTargetTile(undefined);
         this.plane.move(this.plane.tile());
         break;
       } else {
+        // Sinon on avance d'une case
         this.plane.move(result);
       }
     }
