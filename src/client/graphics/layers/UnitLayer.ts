@@ -493,7 +493,7 @@ export class UnitLayer implements Layer {
     if (dstTile !== undefined) {
       const dx = this.game.x(dstTile) - this.game.x(unit.tile());
       const dy = this.game.y(dstTile) - this.game.y(unit.tile());
-      angle = Math.atan2(dy, dx);
+      angle = Math.atan2(dy, dx) + Math.PI / 2;
     }
     this.drawSprite(unit, undefined, angle);
   }
