@@ -118,6 +118,10 @@ export class UnitView {
     if (this.data.ticksLeftInCooldown === undefined) return false;
     return this.data.ticksLeftInCooldown > 0;
   }
+
+  lastAttackTick(): Tick | null {
+    return this.data.lastAttackTick ?? null;
+  }
 }
 
 export class PlayerView {

@@ -131,6 +131,7 @@ export const getColoredSprite = (
   theme: Theme,
   customTerritoryColor?: Colord,
   customBorderColor?: Colord,
+  customSquareColor?: Colord,
 ): HTMLCanvasElement => {
   const owner = unit.owner();
   const territoryColor: Colord =
@@ -149,11 +150,41 @@ export const getColoredSprite = (
   }
 
   if (unit.type() === UnitType.WarPlane) {
+    const planeColor = customTerritoryColor ?? theme.territoryColor(owner);
+    const squareColor = customSquareColor ?? colord("#00ff00");
+    const planeKey = `${unit.type()}-${owner.id()}-${squareColor.toRgbString()}-${planeColor.toRgbString()}`;
+    if (coloredSpriteCache.has(planeKey)) {
+      return coloredSpriteCache.get(planeKey)!;
+    }
+
     const canvas = document.createElement("canvas");
     canvas.width = sprite.width;
     canvas.height = sprite.height;
     const ctx2 = canvas.getContext("2d")!;
     ctx2.drawImage(sprite, 0, 0);
+
+    const imgData = ctx2.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imgData.data;
+    const squareRgb = squareColor.toRgb();
+    const bodyRgb = planeColor.toRgb();
+
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i],
+        g = data[i + 1],
+        b = data[i + 2];
+      if (r === 130 && g === 130 && b === 130) {
+        data[i] = squareRgb.r;
+        data[i + 1] = squareRgb.g;
+        data[i + 2] = squareRgb.b;
+      } else if (r === 168 && g === 30 && b === 30) {
+        data[i] = bodyRgb.r;
+        data[i + 1] = bodyRgb.g;
+        data[i + 2] = bodyRgb.b;
+      }
+    }
+
+    ctx2.putImageData(imgData, 0, 0);
+    coloredSpriteCache.set(planeKey, canvas);
     return canvas;
   }
 
