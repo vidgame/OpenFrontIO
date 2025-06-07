@@ -103,7 +103,6 @@ export class WarPlaneExecution implements Execution {
           this.plane.targetUnit()!,
         ),
       );
-      this.plane.setLastAttackTick(this.mg.ticks());
       if (!this.plane.targetUnit()!.hasHealth()) {
         this.alreadySentShell.add(this.plane.targetUnit()!);
         this.plane.setTargetUnit(undefined);

@@ -421,10 +421,6 @@ export interface Unit {
   // Warships
   setPatrolTile(tile: TileRef): void;
   patrolTile(): TileRef | undefined;
-
-  // Combat visuals
-  setLastAttackTick(tick: Tick): void;
-  lastAttackTick(): Tick | null;
 }
 
 export interface TerraNullius {
