@@ -441,6 +441,8 @@ export class FakeHumanExecution implements Execution {
       return;
     }
     this.maybeSpawnStructure(UnitType.City, 2);
+    this.maybeSpawnStructure(UnitType.Factory, 1);
+    this.maybeSpawnStructure(UnitType.Airport, 1);
     if (this.maybeSpawnWarship()) {
       return;
     }
