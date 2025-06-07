@@ -16,9 +16,12 @@ export class FactoryExecution implements Execution {
   private factory: Unit | null = null;
   private active = true;
 
-  private goldPerTick: Gold = 100n; // 1000 gold per second at 10 ticks/sec
+  private goldPerTick: Gold = 500n; // 5000 gold per second at 10 ticks/sec
 
-  constructor(private ownerId: PlayerID, private tile: TileRef) {}
+  constructor(
+    private ownerId: PlayerID,
+    private tile: TileRef,
+  ) {}
 
   init(mg: Game, ticks: number): void {
     this.mg = mg;
