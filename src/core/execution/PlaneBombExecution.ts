@@ -49,6 +49,8 @@ export class PlaneBombExecution implements Execution {
     // Move directly towards the target tile
     this.plane.setPatrolTile(this.target);
     this.plane.setTargetTile(this.target);
+    // Mark the plane as preparing to drop a bomb
+    this.plane.setLastBombTick(this.mg.ticks());
   }
 
   tick(ticks: number): void {
@@ -58,6 +60,10 @@ export class PlaneBombExecution implements Execution {
     if (!this.plane.isActive()) {
       this.active = false;
       return;
+    }
+    if (!this.bombDropped) {
+      // Continually update so the client knows the plane is on a bombing run
+      this.plane.setLastBombTick(this.mg.ticks());
     }
     if (!this.bombDropped && this.plane.tile() === this.target) {
       this.mg.addExecution(
