@@ -122,6 +122,10 @@ export class UnitView {
   lastAttackTick(): Tick | null {
     return this.data.lastAttackTick ?? null;
   }
+
+  lastBombTick(): Tick | null {
+    return this.data.lastBombTick ?? null;
+  }
 }
 
 export class PlayerView {

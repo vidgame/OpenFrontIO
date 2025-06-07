@@ -68,6 +68,7 @@ export class PlaneBombExecution implements Execution {
           this.plane.tile(),
         ),
       );
+      this.plane.setLastBombTick(this.mg.ticks());
       this.bombDropped = true;
       if (this.prevPatrolTile !== undefined) {
         this.plane.setPatrolTile(this.prevPatrolTile);

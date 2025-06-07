@@ -425,6 +425,8 @@ export interface Unit {
   // Combat visuals
   setLastAttackTick(tick: Tick): void;
   lastAttackTick(): Tick | null;
+  setLastBombTick(tick: Tick): void;
+  lastBombTick(): Tick | null;
 }
 
 export interface TerraNullius {

@@ -28,6 +28,7 @@ export class UnitImpl implements Unit {
   private _troops: number;
   private _cooldownStartTick: Tick | null = null;
   private _lastAttackTick: Tick | null = null;
+  private _lastBombTick: Tick | null = null;
   private _patrolTile: TileRef | undefined;
   constructor(
     private _type: UnitType,
@@ -109,6 +110,7 @@ export class UnitImpl implements Unit {
       targetTile: this.targetTile() ?? undefined,
       ticksLeftInCooldown: this.ticksLeftInCooldown() ?? undefined,
       lastAttackTick: this._lastAttackTick ?? undefined,
+      lastBombTick: this._lastBombTick ?? undefined,
     };
   }
 
@@ -350,5 +352,14 @@ export class UnitImpl implements Unit {
 
   lastAttackTick(): Tick | null {
     return this._lastAttackTick;
+  }
+
+  setLastBombTick(tick: Tick): void {
+    this._lastBombTick = tick;
+    this.touch();
+  }
+
+  lastBombTick(): Tick | null {
+    return this._lastBombTick;
   }
 }
