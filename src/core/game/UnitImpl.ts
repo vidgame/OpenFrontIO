@@ -27,7 +27,6 @@ export class UnitImpl implements Unit {
   private _lastOwner: PlayerImpl | null = null;
   private _troops: number;
   private _cooldownStartTick: Tick | null = null;
-  private _lastAttackTick: Tick | null = null;
   private _patrolTile: TileRef | undefined;
   constructor(
     private _type: UnitType,
@@ -108,7 +107,6 @@ export class UnitImpl implements Unit {
       targetUnitId: this._targetUnit?.id() ?? undefined,
       targetTile: this.targetTile() ?? undefined,
       ticksLeftInCooldown: this.ticksLeftInCooldown() ?? undefined,
-      lastAttackTick: this._lastAttackTick ?? undefined,
     };
   }
 
@@ -341,14 +339,5 @@ export class UnitImpl implements Unit {
       this.mg.ticks() - this._lastSetSafeFromPirates <
       this.mg.config().safeFromPiratesCooldownMax()
     );
-  }
-
-  setLastAttackTick(tick: Tick): void {
-    this._lastAttackTick = tick;
-    this.touch();
-  }
-
-  lastAttackTick(): Tick | null {
-    return this._lastAttackTick;
   }
 }
