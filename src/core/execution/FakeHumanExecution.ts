@@ -336,7 +336,12 @@ export class FakeHumanExecution implements Execution {
       }
     }
     if (bestTile !== null) {
-      this.sendNuke(bestTile);
+      const nukeType = this.chooseNukeType(other);
+      if (this.player.gold() >= this.cost(nukeType)) {
+        this.sendNuke(bestTile, nukeType);
+      } else if (this.player.gold() >= this.cost(UnitType.AtomBomb)) {
+        this.sendNuke(bestTile, UnitType.AtomBomb);
+      }
     }
   }
 
@@ -348,16 +353,50 @@ export class FakeHumanExecution implements Execution {
     const sams = other.units(UnitType.SAMLauncher);
     if (sams.length === 0) return;
 
-    const targetTile = this.random.randElement(sams).tile();
-    if (!this.player.canBuild(UnitType.PlaneBomb, targetTile)) return;
-
-    this.mg.addExecution(
-      new ConstructionExecution(
-        this.player.id(),
-        targetTile,
-        UnitType.PlaneBomb,
-      ),
+    const structures = other.units(
+      UnitType.City,
+      UnitType.DefensePost,
+      UnitType.MissileSilo,
+      UnitType.Port,
+      UnitType.SAMLauncher,
     );
+
+    const candidateTiles: TileRef[] = [];
+    const radius = 10;
+    for (const u of structures) {
+      for (const sam of sams) {
+        if (this.mg.manhattanDist(u.tile(), sam.tile()) <= radius) {
+          candidateTiles.push(u.tile());
+          break;
+        }
+      }
+    }
+
+    if (candidateTiles.length === 0) {
+      candidateTiles.push(...sams.map((s) => s.tile()));
+    }
+
+    let bestTile: TileRef | null = null;
+    let bestValue = 0;
+    const silos = this.player.units(UnitType.MissileSilo);
+    for (const tile of candidateTiles) {
+      if (!this.player.canBuild(UnitType.PlaneBomb, tile)) continue;
+      const val = this.nukeTileScore(tile, silos, structures);
+      if (val > bestValue) {
+        bestTile = tile;
+        bestValue = val;
+      }
+    }
+
+    if (bestTile !== null) {
+      this.mg.addExecution(
+        new ConstructionExecution(
+          this.player.id(),
+          bestTile,
+          UnitType.PlaneBomb,
+        ),
+      );
+    }
   }
 
   private removeOldNukeEvents() {
@@ -371,13 +410,36 @@ export class FakeHumanExecution implements Execution {
     }
   }
 
-  private sendNuke(tile: TileRef) {
+  private sendNuke(
+    tile: TileRef,
+    type: UnitType.AtomBomb | UnitType.HydrogenBomb,
+  ) {
     if (this.player === null) throw new Error("not initialized");
     const tick = this.mg.ticks();
     this.lastNukeSent.push([tick, tile]);
-    this.mg.addExecution(
-      new NukeExecution(UnitType.AtomBomb, this.player.id(), tile),
-    );
+    this.mg.addExecution(new NukeExecution(type, this.player.id(), tile));
+  }
+
+  private chooseNukeType(
+    enemy: Player,
+  ): UnitType.AtomBomb | UnitType.HydrogenBomb {
+    if (this.player === null) throw new Error("not initialized");
+    const costAtom = this.cost(UnitType.AtomBomb);
+    const costHydrogen = this.cost(UnitType.HydrogenBomb);
+    const gold = this.player.gold();
+
+    if (gold < costHydrogen) {
+      return UnitType.AtomBomb;
+    }
+
+    const needHeavy = this.player.troops() < enemy.troops();
+    const abundantGold = gold > costHydrogen * 4n;
+
+    if ((abundantGold || needHeavy) && this.random.chance(5)) {
+      return UnitType.HydrogenBomb;
+    }
+
+    return UnitType.AtomBomb;
   }
 
   private nukeTileScore(tile: TileRef, silos: Unit[], targets: Unit[]): number {
