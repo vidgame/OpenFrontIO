@@ -335,11 +335,10 @@ export class UnitLayer implements Layer {
   }
 
   private handleWarPlaneEvent(unit: UnitView) {
-    if (unit.targetUnitId()) {
-      this.drawSprite(unit, colord({ r: 200, b: 0, g: 0 }));
-    } else {
-      this.drawSprite(unit);
-    }
+    const lastAttack = unit.lastAttackTick();
+    const highlight = lastAttack !== null && this.game.ticks() - lastAttack < 5;
+    const squareColor = highlight ? colord("#ff0000") : colord("#00ff00");
+    this.drawSprite(unit, undefined, 0, squareColor);
   }
 
   private handleShellEvent(unit: UnitView) {
@@ -560,6 +559,7 @@ export class UnitLayer implements Layer {
     unit: UnitView,
     customTerritoryColor?: Colord,
     rotation: number = 0,
+    customSquareColor?: Colord,
   ) {
     if (!isSpriteReady(unit.type())) {
       return; // sprite still loading
@@ -602,6 +602,7 @@ export class UnitLayer implements Layer {
       this.theme,
       alternateViewColor ?? customTerritoryColor,
       alternateViewColor ?? undefined,
+      customSquareColor,
     );
 
     if (unit.isActive()) {
