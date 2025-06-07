@@ -20,6 +20,15 @@ export class MoveWarPlaneExecution implements Execution {
       console.warn("MoveWarPlaneExecution: warplane is not active");
       return;
     }
+    const last = plane.lastBombTick();
+    if (
+      last !== null &&
+      !plane.isInCooldown() &&
+      mg.ticks() - last < mg.config().planeBombCooldown()
+    ) {
+      console.warn("MoveWarPlaneExecution: warplane busy bombing");
+      return;
+    }
     plane.setPatrolTile(this.position);
     plane.setTargetTile(undefined);
   }

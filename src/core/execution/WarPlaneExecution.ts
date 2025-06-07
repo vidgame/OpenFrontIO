@@ -64,7 +64,6 @@ export class WarPlaneExecution implements Execution {
       this.plane.setTargetUnit(this.findTargetUnit());
       if (this.plane.targetUnit() !== undefined) {
         this.shootTarget();
-        return;
       }
     }
 
