@@ -59,11 +59,11 @@ export class FakeHumanExecution implements Execution {
     this.random = new PseudoRandom(
       simpleHash(nation.playerInfo.id) + simpleHash(gameID),
     );
-    // Bots act more frequently to launch missiles often
-    this.attackRate = this.random.nextInt(15, 30);
+    // Bots act more frequently and are more aggressive
+    this.attackRate = this.random.nextInt(10, 20);
     this.attackTick = this.random.nextInt(0, this.attackRate);
-    this.triggerRatio = this.random.nextInt(60, 90) / 100;
-    this.reserveRatio = this.random.nextInt(30, 60) / 100;
+    this.triggerRatio = this.random.nextInt(50, 70) / 100;
+    this.reserveRatio = this.random.nextInt(20, 50) / 100;
     this.heckleEmoji = ["🤡", "😡"].map((e) => flattenedEmojiTable.indexOf(e));
   }
 
@@ -347,22 +347,9 @@ export class FakeHumanExecution implements Execution {
       }
 
       if (this.player.gold() >= this.cost(UnitType.HydrogenBomb)) {
-        const ratio = this.landRatio(
-          tile,
-          this.mg.config().nukeMagnitudes(UnitType.HydrogenBomb).outer,
-        );
-        const preferHydrogen =
-          ratio >= 0.5 ||
-          (sams.length === 0 && other.troops() > this.player.troops());
-        if (preferHydrogen) {
-          const val =
-            value *
-            (sams.length === 0 && other.troops() > this.player.troops()
-              ? 1.5
-              : 1);
-          if (best === null || val > best.value) {
-            best = { tile, value: val, type: UnitType.HydrogenBomb };
-          }
+        const val = value * (sams.length === 0 ? 1.5 : 1);
+        if (best === null || val > best.value) {
+          best = { tile, value: val, type: UnitType.HydrogenBomb };
         }
       }
     }
@@ -394,7 +381,7 @@ export class FakeHumanExecution implements Execution {
     if (maxBombs === 0) return;
 
     const strongEnemy = other.troops() > player.troops();
-    if (!this.random.chance(strongEnemy ? 90 : 60)) return;
+    if (!this.random.chance(strongEnemy ? 100 : 80)) return;
 
     const sams = other.units(UnitType.SAMLauncher);
     const structures = other.units(
@@ -423,7 +410,7 @@ export class FakeHumanExecution implements Execution {
       .filter(({ tile }) => player.canBuild(UnitType.PlaneBomb, tile))
       .sort((a, b) => b.score - a.score);
 
-    const bombLimit = strongEnemy ? maxBombs : Math.min(maxBombs, 3);
+    const bombLimit = maxBombs;
     for (const { tile } of scored.slice(0, bombLimit)) {
       this.mg.addExecution(
         new ConstructionExecution(player.id(), tile, UnitType.PlaneBomb),
@@ -432,7 +419,7 @@ export class FakeHumanExecution implements Execution {
   }
 
   private removeOldNukeEvents() {
-    const maxAge = 500;
+    const maxAge = 100;
     const tick = this.mg.ticks();
     while (
       this.lastNukeSent.length > 0 &&
@@ -498,11 +485,7 @@ export class FakeHumanExecution implements Execution {
       }
     }
 
-    // Don't target near recent targets
-    tileValue -= this.lastNukeSent
-      .filter(([_tick, t]) => dist(this.mg, t))
-      .map(() => 1_000_000)
-      .reduce((prev, cur) => prev + cur, 0);
+    // Previously avoided recently targeted zones - removed for more aggression
 
     return tileValue;
   }
@@ -619,6 +602,9 @@ export class FakeHumanExecution implements Execution {
 
     const planes = this.player.units(UnitType.WarPlane);
     let allowed = this.maxWarPlanes();
+    if (this.player.troops() > 200_000) {
+      allowed = Math.ceil(allowed * 1.5);
+    }
 
     const neighbors = this.player
       .neighbors()
@@ -642,7 +628,7 @@ export class FakeHumanExecution implements Execution {
 
     if (planes.length >= allowed) return;
 
-    const spawnChance = strongEnemy ? 80 : 40;
+    const spawnChance = strongEnemy || this.player.troops() > 200_000 ? 95 : 60;
     if (!this.random.chance(spawnChance)) return;
 
     if (this.player.gold() < this.cost(UnitType.WarPlane)) return;
