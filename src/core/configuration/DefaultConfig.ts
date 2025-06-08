@@ -354,7 +354,7 @@ export class DefaultConfig implements Config {
           cost: (p: Player) =>
             p.type() === PlayerType.Human && this.infiniteGold()
               ? 0n
-              : 2_500_000n,
+              : 5_000_000n,
           territoryBound: false,
         };
       case UnitType.PlaneBomb:
