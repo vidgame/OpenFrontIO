@@ -15,7 +15,7 @@ import {
   Unit,
   UnitType,
 } from "../game/Game";
-import { euclDistFN, manhattanDistFN, TileRef } from "../game/GameMap";
+import { euclDistFN, TileRef } from "../game/GameMap";
 import { PseudoRandom } from "../PseudoRandom";
 import { GameID } from "../Schemas";
 import { calculateBoundingBox, flattenedEmojiTable, simpleHash } from "../Util";
@@ -317,7 +317,6 @@ export class FakeHumanExecution implements Execution {
       UnitType.Port,
       UnitType.SAMLauncher,
     );
-    const sams = other.units(UnitType.SAMLauncher);
     const structureTiles = structures.map((u) => u.tile());
     const randomTiles: (TileRef | null)[] = new Array(10);
     for (let i = 0; i < randomTiles.length; i++) {
@@ -332,14 +331,8 @@ export class FakeHumanExecution implements Execution {
     };
     let best: Candidate | null = null;
     this.removeOldNukeEvents();
-    outer: for (const tile of new Set(allTiles)) {
+    for (const tile of new Set(allTiles)) {
       if (tile === null) continue;
-      for (const t of this.mg.bfs(tile, manhattanDistFN(tile, 15))) {
-        // Make sure we nuke at least 15 tiles in border
-        if (this.mg.owner(t) !== other) {
-          continue outer;
-        }
-      }
       if (!this.player.canBuild(UnitType.AtomBomb, tile)) continue;
       const value = this.nukeTileScore(tile, silos, structures);
       if (best === null || value > best.value) {
@@ -347,7 +340,7 @@ export class FakeHumanExecution implements Execution {
       }
 
       if (this.player.gold() >= this.cost(UnitType.HydrogenBomb)) {
-        const val = value * (sams.length === 0 ? 1.5 : 1);
+        const val = value * 1.5;
         if (best === null || val > best.value) {
           best = { tile, value: val, type: UnitType.HydrogenBomb };
         }
@@ -374,16 +367,21 @@ export class FakeHumanExecution implements Execution {
       .filter((p) => !p.isInCooldown());
     if (planes.length === 0) return;
 
-    const maxBombs = Math.min(
-      planes.length,
-      Math.floor(Number(player.gold()) / Number(this.cost(UnitType.PlaneBomb))),
-    );
-    if (maxBombs === 0) return;
-
     const strongEnemy = other.troops() > player.troops();
-    if (!this.random.chance(strongEnemy ? 100 : 80)) return;
+    let maxBombs = planes.length;
+    if (!strongEnemy) {
+      maxBombs = Math.min(
+        maxBombs,
+        Math.floor(
+          Number(player.gold()) / Number(this.cost(UnitType.PlaneBomb)),
+        ),
+      );
+      if (maxBombs === 0) return;
+    }
 
-    const sams = other.units(UnitType.SAMLauncher);
+    const attackChance = strongEnemy ? 100 : 90;
+    if (!this.random.chance(attackChance)) return;
+
     const structures = other.units(
       UnitType.City,
       UnitType.DefensePost,
@@ -618,7 +616,7 @@ export class FakeHumanExecution implements Execution {
         this.player!.incomingAttacks().some((a) => a.attacker() === n),
     );
     if (atWar && strongEnemy) {
-      allowed = Math.ceil(allowed * 2);
+      allowed = Math.ceil(allowed * 3);
     } else if (
       neighbors.length > 0 &&
       neighbors.every((n) => this.player!.troops() >= n.troops() * 1.5)
@@ -628,7 +626,8 @@ export class FakeHumanExecution implements Execution {
 
     if (planes.length >= allowed) return;
 
-    const spawnChance = strongEnemy || this.player.troops() > 200_000 ? 95 : 60;
+    const spawnChance =
+      strongEnemy || this.player.troops() > 200_000 ? 100 : 80;
     if (!this.random.chance(spawnChance)) return;
 
     if (this.player.gold() < this.cost(UnitType.WarPlane)) return;
@@ -644,8 +643,8 @@ export class FakeHumanExecution implements Execution {
 
   private maxWarPlanes(): number {
     if (this.player === null) throw new Error("not initialized");
-    // Allow one war plane for every 75k troops
-    return Math.floor(this.player.troops() / 75_000);
+    // Allow one war plane for every 25k troops for larger swarms
+    return Math.floor(this.player.troops() / 25_000);
   }
 
   private randTerritoryTile(p: Player): TileRef | null {
