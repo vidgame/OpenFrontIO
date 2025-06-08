@@ -161,6 +161,10 @@ export class MoveWarPlaneIntentEvent implements GameEvent {
   ) {}
 }
 
+export class SendRedAirIntentEvent implements GameEvent {
+  constructor() {}
+}
+
 export class Transport {
   private socket: WebSocket | null = null;
 
@@ -234,6 +238,9 @@ export class Transport {
     });
     this.eventBus.on(MoveWarPlaneIntentEvent, (e) => {
       this.onMoveWarPlaneEvent(e);
+    });
+    this.eventBus.on(SendRedAirIntentEvent, () => {
+      this.onSendRedAirIntent();
     });
   }
 
@@ -601,6 +608,13 @@ export class Transport {
       clientID: this.lobbyConfig.clientID,
       unitId: event.unitId,
       tile: event.tile,
+    });
+  }
+
+  private onSendRedAirIntent() {
+    this.sendIntent({
+      type: "red_air",
+      clientID: this.lobbyConfig.clientID,
     });
   }
 
