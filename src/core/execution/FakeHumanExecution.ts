@@ -45,11 +45,13 @@ export class FakeHumanExecution implements Execution {
   private embargoMalusApplied = new Set<PlayerID>();
   private heckleEmoji: number[];
   // Radius used to evaluate SAM launcher coverage
+
   private readonly SAM_SEARCH_RADIUS = 60;
   // Chance (out of 100) each tick that we'll consider building a SAM
   private readonly SAM_BUILD_ATTEMPT_CHANCE = 10;
   // Maximum SAM launchers we try to maintain
   private readonly SAM_MAX_COUNT = 2;
+
 
   constructor(
     gameID: GameID,
@@ -802,6 +804,7 @@ export class FakeHumanExecution implements Execution {
     }
   }
 
+
   private maybeSpawnSAMLauncher(): void {
     if (this.player === null) throw new Error("not initialized");
     const player = this.player;
@@ -853,6 +856,7 @@ export class FakeHumanExecution implements Execution {
         new ConstructionExecution(player.id(), best.tile, UnitType.SAMLauncher),
       );
     }
+
   }
 
   isActive(): boolean {
