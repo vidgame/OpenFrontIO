@@ -44,6 +44,7 @@ export class FakeHumanExecution implements Execution {
   private lastNukeSent: [Tick, TileRef][] = [];
   private embargoMalusApplied = new Set<PlayerID>();
   private heckleEmoji: number[];
+
   // Radius used to evaluate SAM launcher coverage
   private readonly SAM_SEARCH_RADIUS = 60;
   // Chance (out of 100) each tick that we'll consider building a SAM
@@ -346,9 +347,22 @@ export class FakeHumanExecution implements Execution {
       }
 
       if (this.player.gold() >= this.cost(UnitType.HydrogenBomb)) {
-        const val = value * 1.2;
-        if (best === null || val > best.value) {
-          best = { tile, value: val, type: UnitType.HydrogenBomb };
+        const ratio = this.landRatio(
+          tile,
+          this.mg.config().nukeMagnitudes(UnitType.HydrogenBomb).outer,
+        );
+        const preferHydrogen =
+          ratio >= 0.5 ||
+          (sams.length === 0 && other.troops() > this.player.troops());
+        if (preferHydrogen) {
+          const val =
+            value *
+            (sams.length === 0 && other.troops() > this.player.troops()
+              ? 1.5
+              : 1);
+          if (best === null || val > best.value) {
+            best = { tile, value: val, type: UnitType.HydrogenBomb };
+          }
         }
       }
     }
@@ -380,7 +394,7 @@ export class FakeHumanExecution implements Execution {
     if (maxBombs === 0) return;
 
     const strongEnemy = other.troops() > player.troops();
-    if (!this.random.chance(strongEnemy ? 100 : 80)) return;
+    if (!this.random.chance(strongEnemy ? 90 : 60)) return;
 
     const sams = other.units(UnitType.SAMLauncher);
     const structures = other.units(
@@ -409,7 +423,7 @@ export class FakeHumanExecution implements Execution {
       .filter(({ tile }) => player.canBuild(UnitType.PlaneBomb, tile))
       .sort((a, b) => b.score - a.score);
 
-    const bombLimit = strongEnemy ? maxBombs : Math.min(maxBombs, 5);
+    const bombLimit = strongEnemy ? maxBombs : Math.min(maxBombs, 3);
     for (const { tile } of scored.slice(0, bombLimit)) {
       this.mg.addExecution(
         new ConstructionExecution(player.id(), tile, UnitType.PlaneBomb),
@@ -539,7 +553,7 @@ export class FakeHumanExecution implements Execution {
     if (this.maybeSpawnWarship()) {
       return;
     }
-    this.maybeSpawnStructure(UnitType.MissileSilo, 2);
+    this.maybeSpawnStructure(UnitType.MissileSilo, 1);
     this.maybeSpawnSAMLauncher();
     this.maybeSpawnWarPlane();
   }
@@ -628,7 +642,7 @@ export class FakeHumanExecution implements Execution {
 
     if (planes.length >= allowed) return;
 
-    const spawnChance = strongEnemy ? 100 : 60;
+    const spawnChance = strongEnemy ? 80 : 40;
     if (!this.random.chance(spawnChance)) return;
 
     if (this.player.gold() < this.cost(UnitType.WarPlane)) return;
@@ -779,7 +793,7 @@ export class FakeHumanExecution implements Execution {
       case UnitType.Port:
         return 10_000;
       case UnitType.SAMLauncher:
-        return 20_000;
+        return 12_000;
       case UnitType.Factory:
         return 15_000;
       case UnitType.Airport:
