@@ -18,16 +18,17 @@ import { EventBus } from "../../../core/EventBus";
 import { Cell, Gold, PlayerActions, UnitType } from "../../../core/game/Game";
 import { TileRef } from "../../../core/game/GameMap";
 import { GameView } from "../../../core/game/GameView";
-import { BuildUnitIntentEvent } from "../../Transport";
+import { BuildUnitIntentEvent, SendRedAirIntentEvent } from "../../Transport";
 import { renderNumber } from "../../Utils";
 import { Layer } from "./Layer";
 
 interface BuildItemDisplay {
-  unitType: UnitType;
+  unitType?: UnitType;
   icon: string;
   description?: string;
   key?: string;
   countable?: boolean;
+  action?: "red_air";
 }
 
 const buildTable: BuildItemDisplay[][] = [
@@ -66,6 +67,13 @@ const buildTable: BuildItemDisplay[][] = [
       description: "build_menu.desc.warplane",
       key: "unit_type.warplane",
       countable: true,
+    },
+    {
+      action: "red_air",
+      icon: warplaneIcon,
+      description: "build_menu.desc.red_air",
+      key: "unit_type.red_air",
+      countable: false,
     },
     {
       unitType: UnitType.PlaneBomb,
@@ -333,7 +341,30 @@ export class BuildMenu extends LitElement implements Layer {
   @state()
   private _hidden = true;
 
+  private availablePlanes(): number {
+    const player = this.game?.myPlayer();
+    if (!player) return 0;
+    const cd = this.game.config().planeBombCooldown();
+    return player.units(UnitType.WarPlane).filter((p) => {
+      if (p.isCooldown()) return false;
+      const last = p.lastBombTick();
+      return last === null || this.game.ticks() - last >= cd;
+    }).length;
+  }
+
   private canBuild(item: BuildItemDisplay): boolean {
+    if (item.action === "red_air") {
+      const player = this.game?.myPlayer();
+      if (!player || this.playerActions === null) return false;
+      const owner = this.game.owner(this.clickedTile);
+      if (!owner.isPlayer() || owner === player || player.isOnSameTeam(owner)) {
+        return false;
+      }
+      const planes = this.availablePlanes();
+      if (planes < 2) return false;
+      const cost = BigInt(planes) * 750_000n;
+      return player.gold() >= cost;
+    }
     if (this.game?.myPlayer() === null || this.playerActions === null) {
       return false;
     }
@@ -346,6 +377,12 @@ export class BuildMenu extends LitElement implements Layer {
   }
 
   private cost(item: BuildItemDisplay): Gold {
+    if (item.action === "red_air") {
+      const player = this.game?.myPlayer();
+      if (!player) return 0n;
+      const planes = this.availablePlanes();
+      return BigInt(planes) * 750_000n;
+    }
     for (const bu of this.playerActions?.buildableUnits ?? []) {
       if (bu.type === item.unitType) {
         return bu.cost;
@@ -359,17 +396,27 @@ export class BuildMenu extends LitElement implements Layer {
     if (!player) {
       return "?";
     }
+    if (item.action === "red_air") {
+      return this.availablePlanes().toString();
+    }
 
-    return player.units(item.unitType).length.toString();
+    return player.units(item.unitType!).length.toString();
   }
 
   public onBuildSelected = (item: BuildItemDisplay) => {
-    this.eventBus.emit(
-      new BuildUnitIntentEvent(
-        item.unitType,
-        new Cell(this.game.x(this.clickedTile), this.game.y(this.clickedTile)),
-      ),
-    );
+    if (item.action === "red_air") {
+      this.eventBus.emit(new SendRedAirIntentEvent());
+    } else if (item.unitType !== undefined) {
+      this.eventBus.emit(
+        new BuildUnitIntentEvent(
+          item.unitType,
+          new Cell(
+            this.game.x(this.clickedTile),
+            this.game.y(this.clickedTile),
+          ),
+        ),
+      );
+    }
     this.hideMenu();
   };
 
@@ -458,7 +505,11 @@ export class BuildMenu extends LitElement implements Layer {
 
   private getBuildableUnits(): BuildItemDisplay[][] {
     return buildTable.map((row) =>
-      row.filter((item) => !this.game?.config()?.isUnitDisabled(item.unitType)),
+      row.filter(
+        (item) =>
+          item.unitType === undefined ||
+          !this.game?.config()?.isUnitDisabled(item.unitType),
+      ),
     );
   }
 

@@ -98,6 +98,8 @@
     "build_warship_desc": "Patrols in an area, capturing enemy trade ships and destroying their Boats (transport ships) and Warships. Spawns from the nearest Port and patrols the area you first clicked to build it. You can control Warships by attack-clicking on them (see action Attack under Hotkeys) and then attack-clicking the new area you want them to move to.",
     "build_warplane": "War Plane",
     "build_warplane_desc": "Patrols an area and automatically attacks enemy planes except allies. Spawns from the nearest Airport and patrols the area you first clicked to build it.",
+    "build_red_air": "Red Air",
+    "build_red_air_desc": "Launch all available war planes on the selected player. Cost scales with the number of planes.",
     "build_silo": "Missile Silo",
     "build_silo_desc": "Allows launching missiles.",
     "build_sam": "SAM Launcher",
@@ -235,6 +237,7 @@
     "hydrogen_bomb": "Hydrogen Bomb",
     "plane_bomb": "Plane Bomb",
     "mirv": "MIRV",
+    "red_air": "Red Air",
     "factory": "Factory",
     "airport": "Airport"
   },
