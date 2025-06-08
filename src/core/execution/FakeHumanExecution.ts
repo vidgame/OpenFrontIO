@@ -45,7 +45,13 @@ export class FakeHumanExecution implements Execution {
   private embargoMalusApplied = new Set<PlayerID>();
   private heckleEmoji: number[];
   // Radius used to evaluate SAM launcher coverage
-  private readonly SAM_SEARCH_RADIUS = 80;
+
+  private readonly SAM_SEARCH_RADIUS = 60;
+  // Chance (out of 100) each tick that we'll consider building a SAM
+  private readonly SAM_BUILD_ATTEMPT_CHANCE = 10;
+  // Maximum SAM launchers we try to maintain
+  private readonly SAM_MAX_COUNT = 2;
+
 
   constructor(
     gameID: GameID,
@@ -798,51 +804,59 @@ export class FakeHumanExecution implements Execution {
     }
   }
 
-  private samPlacementScore(
-    tile: TileRef,
-    sams: Unit[],
-    structures: Unit[],
-  ): number {
-    const dist = euclDistFN(tile, this.SAM_SEARCH_RADIUS, false);
-    let value = structures
-      .filter((u) => dist(this.mg, u.tile()))
-      .map((u) => this.structureValue(u))
-      .reduce((p, c) => p + c, 0);
-    if (sams.some((s) => dist(this.mg, s.tile()))) {
-      value *= 0.5;
-    }
-    return value;
-  }
 
   private maybeSpawnSAMLauncher(): void {
     if (this.player === null) throw new Error("not initialized");
     const player = this.player;
+
+    if (!this.random.chance(this.SAM_BUILD_ATTEMPT_CHANCE)) return;
     if (player.gold() < this.cost(UnitType.SAMLauncher)) return;
 
     const sams = player.units(UnitType.SAMLauncher);
-    const structures = player.units(
-      UnitType.City,
-      UnitType.DefensePost,
-      UnitType.MissileSilo,
-      UnitType.Port,
-      UnitType.Factory,
-      UnitType.Airport,
-    );
+    if (sams.length >= this.SAM_MAX_COUNT) return;
 
-    const candidates: { tile: TileRef; score: number }[] = [];
-    for (const tile of player.tiles()) {
-      if (!player.canBuild(UnitType.SAMLauncher, tile)) continue;
-      const score = this.samPlacementScore(tile, sams, structures);
-      candidates.push({ tile, score });
+    const structures = player
+      .units(
+        UnitType.City,
+        UnitType.DefensePost,
+        UnitType.MissileSilo,
+        UnitType.Port,
+        UnitType.Factory,
+        UnitType.Airport,
+      )
+      .sort((a, b) => this.structureValue(b) - this.structureValue(a))
+      .slice(0, 3); // only check the most valuable few
+
+    let best: { tile: TileRef; score: number } | null = null;
+    for (const structure of structures) {
+      const around = this.mg.bfs(
+        structure.tile(),
+        euclDistFN(structure.tile(), 5, false),
+      );
+      for (const tile of around) {
+        if (!player.canBuild(UnitType.SAMLauncher, tile)) continue;
+        let score = this.structureValue(structure);
+        if (
+          sams.some(
+            (s) =>
+              this.mg.euclideanDistSquared(s.tile(), tile) <=
+              this.SAM_SEARCH_RADIUS * this.SAM_SEARCH_RADIUS,
+          )
+        ) {
+          score *= 0.5;
+        }
+        if (best === null || score > best.score) {
+          best = { tile, score };
+        }
+      }
     }
 
-    if (candidates.length === 0) return;
-    candidates.sort((a, b) => b.score - a.score);
-    const best = candidates[0];
-    if (best.score <= 0) return;
-    this.mg.addExecution(
-      new ConstructionExecution(player.id(), best.tile, UnitType.SAMLauncher),
-    );
+    if (best) {
+      this.mg.addExecution(
+        new ConstructionExecution(player.id(), best.tile, UnitType.SAMLauncher),
+      );
+    }
+
   }
 
   isActive(): boolean {
