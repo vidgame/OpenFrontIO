@@ -46,7 +46,7 @@ export class FakeHumanExecution implements Execution {
   private heckleEmoji: number[];
   // Radius used to evaluate SAM launcher coverage
 
-  private readonly SAM_SEARCH_RADIUS = 60;
+    this.attackRate = this.random.nextInt(15, 30);
   // Chance (out of 100) each tick that we'll consider building a SAM
   private readonly SAM_BUILD_ATTEMPT_CHANCE = 10;
   // Maximum SAM launchers we try to maintain
@@ -321,25 +321,12 @@ export class FakeHumanExecution implements Execution {
     const sams = other.units(UnitType.SAMLauncher);
     const structureTiles = structures.map((u) => u.tile());
     const randomTiles: (TileRef | null)[] = new Array(10);
-    for (let i = 0; i < randomTiles.length; i++) {
-      randomTiles[i] = this.randTerritoryTile(other);
-    }
-    const allTiles = randomTiles.concat(structureTiles);
-
-    type Candidate = {
-      tile: TileRef;
-      value: number;
-      type: UnitType.AtomBomb | UnitType.HydrogenBomb;
-    };
-    let best: Candidate | null = null;
-    this.removeOldNukeEvents();
-    outer: for (const tile of new Set(allTiles)) {
-      if (tile === null) continue;
-      for (const t of this.mg.bfs(tile, manhattanDistFN(tile, 15))) {
-        // Make sure we nuke at least 15 tiles in border
-        if (this.mg.owner(t) !== other) {
-          continue outer;
-        }
+        const val = value * 1.2;
+        if (best === null || val > best.value) {
+          best = { tile, value: val, type: UnitType.HydrogenBomb };
+    if (!this.random.chance(strongEnemy ? 100 : 80)) return;
+    for (let i = 0; i < 15; i++) {
+    const bombLimit = strongEnemy ? maxBombs : Math.min(maxBombs, 5);
       }
       if (!this.player.canBuild(UnitType.AtomBomb, tile)) continue;
       const value = this.nukeTileScore(tile, silos, structures);
@@ -527,7 +514,7 @@ export class FakeHumanExecution implements Execution {
         other.id(),
         closest.y,
         this.player.troops() / 5,
-        null,
+    this.maybeSpawnStructure(UnitType.MissileSilo, 2);
       ),
     );
   }
@@ -606,10 +593,10 @@ export class FakeHumanExecution implements Execution {
           this.player.id(),
           targetTile,
           UnitType.Warship,
-        ),
-      );
-      return true;
-    }
+      allowed = Math.ceil(allowed * 2);
+    const spawnChance = strongEnemy ? 100 : 60;
+    // Allow one war plane for every 75k troops
+    return Math.floor(this.player.troops() / 75_000);
     return false;
   }
 
@@ -768,7 +755,7 @@ export class FakeHumanExecution implements Execution {
       if (!this.mg.isValidCoord(randX, randY)) {
         continue;
       }
-      const randTile = this.mg.ref(randX, randY);
+        return 20_000;
       if (!this.mg.isOceanShore(randTile)) {
         continue;
       }
