@@ -44,14 +44,13 @@ export class FakeHumanExecution implements Execution {
   private lastNukeSent: [Tick, TileRef][] = [];
   private embargoMalusApplied = new Set<PlayerID>();
   private heckleEmoji: number[];
-  // Radius used to evaluate SAM launcher coverage
 
+  // Radius used to evaluate SAM launcher coverage
   private readonly SAM_SEARCH_RADIUS = 60;
   // Chance (out of 100) each tick that we'll consider building a SAM
   private readonly SAM_BUILD_ATTEMPT_CHANCE = 10;
   // Maximum SAM launchers we try to maintain
   private readonly SAM_MAX_COUNT = 2;
-
 
   constructor(
     gameID: GameID,
@@ -61,7 +60,7 @@ export class FakeHumanExecution implements Execution {
       simpleHash(nation.playerInfo.id) + simpleHash(gameID),
     );
     // Bots act more frequently to launch missiles often
-    this.attackRate = this.random.nextInt(20, 40);
+    this.attackRate = this.random.nextInt(15, 30);
     this.attackTick = this.random.nextInt(0, this.attackRate);
     this.triggerRatio = this.random.nextInt(60, 90) / 100;
     this.reserveRatio = this.random.nextInt(30, 60) / 100;
@@ -410,7 +409,7 @@ export class FakeHumanExecution implements Execution {
     for (const u of structures) {
       candidateTiles.push(u.tile());
     }
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 15; i++) {
       const rand = this.randTerritoryTile(other);
       if (rand) candidateTiles.push(rand);
     }
@@ -633,7 +632,7 @@ export class FakeHumanExecution implements Execution {
         this.player!.incomingAttacks().some((a) => a.attacker() === n),
     );
     if (atWar && strongEnemy) {
-      allowed = Math.ceil(allowed * 1.5);
+      allowed = Math.ceil(allowed * 2);
     } else if (
       neighbors.length > 0 &&
       neighbors.every((n) => this.player!.troops() >= n.troops() * 1.5)
@@ -659,8 +658,8 @@ export class FakeHumanExecution implements Execution {
 
   private maxWarPlanes(): number {
     if (this.player === null) throw new Error("not initialized");
-    // Allow one war plane for every 100k troops
-    return Math.floor(this.player.troops() / 100_000);
+    // Allow one war plane for every 75k troops
+    return Math.floor(this.player.troops() / 75_000);
   }
 
   private randTerritoryTile(p: Player): TileRef | null {
@@ -804,7 +803,6 @@ export class FakeHumanExecution implements Execution {
     }
   }
 
-
   private maybeSpawnSAMLauncher(): void {
     if (this.player === null) throw new Error("not initialized");
     const player = this.player;
@@ -856,7 +854,6 @@ export class FakeHumanExecution implements Execution {
         new ConstructionExecution(player.id(), best.tile, UnitType.SAMLauncher),
       );
     }
-
   }
 
   isActive(): boolean {
