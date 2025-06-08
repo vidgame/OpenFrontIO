@@ -45,11 +45,8 @@ export class FakeHumanExecution implements Execution {
   private embargoMalusApplied = new Set<PlayerID>();
   private heckleEmoji: number[];
 
-  // Radius used to evaluate SAM launcher coverage
   private readonly SAM_SEARCH_RADIUS = 60;
-  // Chance (out of 100) each tick that we'll consider building a SAM
-  private readonly SAM_BUILD_ATTEMPT_CHANCE = 10;
-  // Maximum SAM launchers we try to maintain
+  private readonly SAM_BUILD_ATTEMPT_CHANCE = 3; // Diminué !
   private readonly SAM_MAX_COUNT = 2;
 
   constructor(
@@ -59,7 +56,6 @@ export class FakeHumanExecution implements Execution {
     this.random = new PseudoRandom(
       simpleHash(nation.playerInfo.id) + simpleHash(gameID),
     );
-    // Bots act more frequently and are more aggressive
     this.attackRate = this.random.nextInt(10, 20);
     this.attackTick = this.random.nextInt(0, this.attackRate);
     this.triggerRatio = this.random.nextInt(50, 70) / 100;
@@ -103,7 +99,6 @@ export class FakeHumanExecution implements Execution {
     const others = this.mg.players().filter((p) => p.id() !== player.id());
 
     others.forEach((other: Player) => {
-      /* When player is hostile starts embargo. Do not stop until neutral again */
       if (
         player.relation(other) <= Relation.Hostile &&
         !player.hasEmbargoAgainst(other)
@@ -133,8 +128,7 @@ export class FakeHumanExecution implements Execution {
 
     if (this.player === null) {
       this.player =
-        this.mg.players().find((p) => p.id() === this.nation.playerInfo.id) ??
-        null;
+        this.mg.players().find((p) => p.id() === this.nation.playerInfo.id) ?? null;
       if (this.player === null) {
         return;
       }
@@ -146,7 +140,6 @@ export class FakeHumanExecution implements Execution {
     }
 
     if (this.behavior === null) {
-      // Player is unavailable during init()
       this.behavior = new BotBehavior(
         this.random,
         this.mg,
@@ -211,7 +204,6 @@ export class FakeHumanExecution implements Execution {
       .filter((o) => o.isPlayer())
       .sort((a, b) => a.troops() - b.troops());
 
-    // 5% chance to send a random alliance request
     if (this.random.chance(20)) {
       const toAlly = this.random.randElement(enemies);
       if (this.player.canSendAllianceRequest(toAlly)) {
@@ -220,7 +212,6 @@ export class FakeHumanExecution implements Execution {
       }
     }
 
-    // 50-50 attack weakest player vs random player
     const toAttack = this.random.chance(2)
       ? enemies[0]
       : this.random.randElement(enemies);
@@ -261,7 +252,6 @@ export class FakeHumanExecution implements Execution {
     if (other.type() !== PlayerType.Human) {
       return false;
     }
-    // Only discourage attacks on Humans who are not traitors on easy or medium difficulty.
     return true;
   }
 
@@ -274,8 +264,27 @@ export class FakeHumanExecution implements Execution {
     const enemy = this.behavior.selectEnemy();
     if (!enemy) return;
     this.maybeSendEmoji(enemy);
-    this.maybeSendPlaneBomb(enemy);
-    this.maybeSendNuke(enemy);
+
+    // Priorité attaque avion si SAMs sinon missiles classiques
+    const enemyHasSAM =
+      enemy.units(UnitType.SAMLauncher).length > 0;
+
+    // Vérifie la condition pour l'attaque en salve d'avions
+    const playerTroops = this.player.troops();
+    const enemyTroops = enemy.troops();
+    const strongEnemy = enemyTroops >= playerTroops * 0.8;
+
+    if (enemyHasSAM && strongEnemy) {
+      this.maybeSendPlaneBomb(enemy, true);
+      // Ne lance pas de nuke ou bombe hydro si l'attaque aérienne est possible/prioritaire
+    } else if (strongEnemy) {
+      this.maybeSendPlaneBomb(enemy, true);
+      this.maybeSendNuke(enemy);
+    } else {
+      this.maybeSendPlaneBomb(enemy, false);
+      this.maybeSendNuke(enemy);
+    }
+
     if (this.player.sharesBorderWith(enemy)) {
       this.behavior.sendAttack(enemy);
     } else {
@@ -356,31 +365,49 @@ export class FakeHumanExecution implements Execution {
     }
   }
 
-  private maybeSendPlaneBomb(other: Player) {
+  /**
+   * Favorise les salves massives d’avions contre les ennemis puissants,
+   * avec priorité si l'ennemi possède des SAM launchers.
+   * - Salve = X% de tous les avions disponibles, chaque avion vise une cible différente (jamais tous sur la même).
+   * - Utilise le budget dispo (gold).
+   * - Si ennemi puissant & SAM: toujours prioriser avion > missiles/nukes.
+   */
+  private maybeSendPlaneBomb(other: Player, preferSalvo = false) {
     if (this.player === null) throw new Error("not initialized");
     const player = this.player;
-
     if (player.isOnSameTeam(other)) return;
 
-    const planes = player
+    const allPlanes = player
       .units(UnitType.WarPlane)
       .filter((p) => !p.isInCooldown());
-    if (planes.length === 0) return;
+    if (allPlanes.length === 0) return;
 
-    const strongEnemy = other.troops() > player.troops();
-    let maxBombs = planes.length;
-    if (!strongEnemy) {
-      maxBombs = Math.min(
-        maxBombs,
-        Math.floor(
-          Number(player.gold()) / Number(this.cost(UnitType.PlaneBomb)),
-        ),
-      );
-      if (maxBombs === 0) return;
+    let doSalvo = preferSalvo;
+    const playerTroops = player.troops();
+    const enemyTroops = other.troops();
+
+    if (!doSalvo && enemyTroops >= playerTroops * 0.8) {
+      doSalvo = true;
     }
 
-    const attackChance = strongEnemy ? 100 : 90;
-    if (!this.random.chance(attackChance)) return;
+    let nbBombers = 1;
+
+    if (doSalvo) {
+      const ratio = this.random.nextInt(30, 100) / 100;
+      nbBombers = Math.max(1, Math.floor(allPlanes.length * ratio));
+      nbBombers = Math.min(
+        nbBombers,
+        Math.floor(Number(player.gold()) / Number(this.cost(UnitType.PlaneBomb)))
+      );
+      if (nbBombers === 0) return;
+    } else {
+      nbBombers = Math.min(
+        allPlanes.length,
+        Math.floor(Number(player.gold()) / Number(this.cost(UnitType.PlaneBomb))),
+        this.random.nextInt(1, 3)
+      );
+      if (nbBombers === 0) return;
+    }
 
     const structures = other.units(
       UnitType.City,
@@ -388,13 +415,12 @@ export class FakeHumanExecution implements Execution {
       UnitType.MissileSilo,
       UnitType.Port,
       UnitType.SAMLauncher,
+      UnitType.Factory,
+      UnitType.Airport
     );
-
     const candidateTiles: TileRef[] = [];
-    for (const u of structures) {
-      candidateTiles.push(u.tile());
-    }
-    for (let i = 0; i < 15; i++) {
+    for (const u of structures) candidateTiles.push(u.tile());
+    for (let i = 0; i < 20; i++) {
       const rand = this.randTerritoryTile(other);
       if (rand) candidateTiles.push(rand);
     }
@@ -408,11 +434,17 @@ export class FakeHumanExecution implements Execution {
       .filter(({ tile }) => player.canBuild(UnitType.PlaneBomb, tile))
       .sort((a, b) => b.score - a.score);
 
-    const bombLimit = maxBombs;
-    for (const { tile } of scored.slice(0, bombLimit)) {
+    const usedTiles = new Set<TileRef>();
+    let bombsLeft = nbBombers;
+
+    for (const { tile } of scored) {
+      if (bombsLeft === 0) break;
+      if (usedTiles.has(tile)) continue;
       this.mg.addExecution(
-        new ConstructionExecution(player.id(), tile, UnitType.PlaneBomb),
+        new ConstructionExecution(player.id(), tile, UnitType.PlaneBomb)
       );
+      usedTiles.add(tile);
+      bombsLeft--;
     }
   }
 
@@ -449,7 +481,6 @@ export class FakeHumanExecution implements Execution {
   }
 
   private nukeTileScore(tile: TileRef, silos: Unit[], targets: Unit[]): number {
-    // Potential damage in a 25-tile radius
     const dist = euclDistFN(tile, 25, false);
     let tileValue = targets
       .filter((unit) => dist(this.mg, unit.tile()))
@@ -471,7 +502,6 @@ export class FakeHumanExecution implements Execution {
       })
       .reduce((prev, cur) => prev + cur, 0);
 
-    // Prefer tiles that are closer to a silo
     if (silos.length > 0) {
       const siloTiles = silos.map((u) => u.tile());
       const result = closestTwoTiles(this.mg, siloTiles, [tile]);
@@ -482,8 +512,6 @@ export class FakeHumanExecution implements Execution {
         tileValue -= distanceToClosestSilo * 30;
       }
     }
-
-    // Previously avoided recently targeted zones - removed for more aggression
 
     return tileValue;
   }
@@ -626,6 +654,7 @@ export class FakeHumanExecution implements Execution {
 
     if (planes.length >= allowed) return;
 
+    // Probabilité inchangée (80 ou 100 selon situation)
     const spawnChance =
       strongEnemy || this.player.troops() > 200_000 ? 100 : 80;
     if (!this.random.chance(spawnChance)) return;
@@ -643,7 +672,6 @@ export class FakeHumanExecution implements Execution {
 
   private maxWarPlanes(): number {
     if (this.player === null) throw new Error("not initialized");
-    // Allow one war plane for every 25k troops for larger swarms
     return Math.floor(this.player.troops() / 25_000);
   }
 
@@ -767,6 +795,8 @@ export class FakeHumanExecution implements Execution {
     return null;
   }
 
+  // Version modifiée : la valeur d'un SAM Launcher déjà présent = 0, probabilité de spawn réduite, score rapide,
+  // si un SAM est déjà dans la zone alors la probabilité tombe à 0 pour la zone.
   private structureValue(unit: Unit): number {
     switch (unit.type()) {
       case UnitType.City:
@@ -778,7 +808,7 @@ export class FakeHumanExecution implements Execution {
       case UnitType.Port:
         return 10_000;
       case UnitType.SAMLauncher:
-        return 12_000;
+        return 0; // Un SAM Launcher déjà là n'ajoute rien à la rentabilité.
       case UnitType.Factory:
         return 15_000;
       case UnitType.Airport:
@@ -792,12 +822,14 @@ export class FakeHumanExecution implements Execution {
     if (this.player === null) throw new Error("not initialized");
     const player = this.player;
 
+    // Probabilité faible
     if (!this.random.chance(this.SAM_BUILD_ATTEMPT_CHANCE)) return;
     if (player.gold() < this.cost(UnitType.SAMLauncher)) return;
 
     const sams = player.units(UnitType.SAMLauncher);
     if (sams.length >= this.SAM_MAX_COUNT) return;
 
+    // Structures importantes à protéger (hors SAM)
     const structures = player
       .units(
         UnitType.City,
@@ -806,35 +838,53 @@ export class FakeHumanExecution implements Execution {
         UnitType.Port,
         UnitType.Factory,
         UnitType.Airport,
-      )
-      .sort((a, b) => this.structureValue(b) - this.structureValue(a))
-      .slice(0, 3); // only check the most valuable few
+      );
 
     let best: { tile: TileRef; score: number } | null = null;
+
+    // Pour chaque structure importante, calcule un score rapide (somme des valeurs des structures proches)
     for (const structure of structures) {
+      // Ignore la zone si déjà un SAM à proximité (probabilité 0)
+      const samNearby = sams.some(
+        (s) =>
+          this.mg.euclideanDistSquared(s.tile(), structure.tile()) <=
+          this.SAM_SEARCH_RADIUS * this.SAM_SEARCH_RADIUS,
+      );
+      if (samNearby) continue;
+
+      let localScore = 0;
+      for (const neighbor of structures) {
+        const dist = this.mg.euclideanDistSquared(structure.tile(), neighbor.tile());
+        if (dist <= (this.SAM_SEARCH_RADIUS * this.SAM_SEARCH_RADIUS)) {
+          localScore += this.structureValue(neighbor);
+        }
+      }
+
+      // Cherche une case possible autour de la structure
       const around = this.mg.bfs(
         structure.tile(),
         euclDistFN(structure.tile(), 5, false),
       );
       for (const tile of around) {
         if (!player.canBuild(UnitType.SAMLauncher, tile)) continue;
-        let score = this.structureValue(structure);
+
+        // Double sécurité : si un SAM est déjà trop proche de ce tile, ignore-le
         if (
           sams.some(
             (s) =>
               this.mg.euclideanDistSquared(s.tile(), tile) <=
               this.SAM_SEARCH_RADIUS * this.SAM_SEARCH_RADIUS,
           )
-        ) {
-          score *= 0.5;
-        }
-        if (best === null || score > best.score) {
-          best = { tile, score };
+        ) continue;
+
+        if (best === null || localScore > best.score) {
+          best = { tile, score: localScore };
         }
       }
     }
 
-    if (best) {
+    // Placement seulement si score > 0 (au moins une structure à protéger)
+    if (best && best.score > 0) {
       this.mg.addExecution(
         new ConstructionExecution(player.id(), best.tile, UnitType.SAMLauncher),
       );
