@@ -47,7 +47,7 @@ export class FakeHumanExecution implements Execution {
 
   private readonly SAM_SEARCH_RADIUS = 60;
   private readonly SAM_BUILD_ATTEMPT_CHANCE = 3; // Diminué !
-  private readonly SAM_MAX_COUNT = 2;
+  private readonly SAM_MAX_COUNT = 5;
 
   constructor(
     gameID: GameID,
@@ -128,7 +128,8 @@ export class FakeHumanExecution implements Execution {
 
     if (this.player === null) {
       this.player =
-        this.mg.players().find((p) => p.id() === this.nation.playerInfo.id) ?? null;
+        this.mg.players().find((p) => p.id() === this.nation.playerInfo.id) ??
+        null;
       if (this.player === null) {
         return;
       }
@@ -266,8 +267,7 @@ export class FakeHumanExecution implements Execution {
     this.maybeSendEmoji(enemy);
 
     // Priorité attaque avion si SAMs sinon missiles classiques
-    const enemyHasSAM =
-      enemy.units(UnitType.SAMLauncher).length > 0;
+    const enemyHasSAM = enemy.units(UnitType.SAMLauncher).length > 0;
 
     // Vérifie la condition pour l'attaque en salve d'avions
     const playerTroops = this.player.troops();
@@ -397,14 +397,18 @@ export class FakeHumanExecution implements Execution {
       nbBombers = Math.max(1, Math.floor(allPlanes.length * ratio));
       nbBombers = Math.min(
         nbBombers,
-        Math.floor(Number(player.gold()) / Number(this.cost(UnitType.PlaneBomb)))
+        Math.floor(
+          Number(player.gold()) / Number(this.cost(UnitType.PlaneBomb)),
+        ),
       );
       if (nbBombers === 0) return;
     } else {
       nbBombers = Math.min(
         allPlanes.length,
-        Math.floor(Number(player.gold()) / Number(this.cost(UnitType.PlaneBomb))),
-        this.random.nextInt(1, 3)
+        Math.floor(
+          Number(player.gold()) / Number(this.cost(UnitType.PlaneBomb)),
+        ),
+        this.random.nextInt(1, 3),
       );
       if (nbBombers === 0) return;
     }
@@ -416,7 +420,7 @@ export class FakeHumanExecution implements Execution {
       UnitType.Port,
       UnitType.SAMLauncher,
       UnitType.Factory,
-      UnitType.Airport
+      UnitType.Airport,
     );
     const candidateTiles: TileRef[] = [];
     for (const u of structures) candidateTiles.push(u.tile());
@@ -441,7 +445,7 @@ export class FakeHumanExecution implements Execution {
       if (bombsLeft === 0) break;
       if (usedTiles.has(tile)) continue;
       this.mg.addExecution(
-        new ConstructionExecution(player.id(), tile, UnitType.PlaneBomb)
+        new ConstructionExecution(player.id(), tile, UnitType.PlaneBomb),
       );
       usedTiles.add(tile);
       bombsLeft--;
@@ -830,15 +834,14 @@ export class FakeHumanExecution implements Execution {
     if (sams.length >= this.SAM_MAX_COUNT) return;
 
     // Structures importantes à protéger (hors SAM)
-    const structures = player
-      .units(
-        UnitType.City,
-        UnitType.DefensePost,
-        UnitType.MissileSilo,
-        UnitType.Port,
-        UnitType.Factory,
-        UnitType.Airport,
-      );
+    const structures = player.units(
+      UnitType.City,
+      UnitType.DefensePost,
+      UnitType.MissileSilo,
+      UnitType.Port,
+      UnitType.Factory,
+      UnitType.Airport,
+    );
 
     let best: { tile: TileRef; score: number } | null = null;
 
@@ -854,8 +857,11 @@ export class FakeHumanExecution implements Execution {
 
       let localScore = 0;
       for (const neighbor of structures) {
-        const dist = this.mg.euclideanDistSquared(structure.tile(), neighbor.tile());
-        if (dist <= (this.SAM_SEARCH_RADIUS * this.SAM_SEARCH_RADIUS)) {
+        const dist = this.mg.euclideanDistSquared(
+          structure.tile(),
+          neighbor.tile(),
+        );
+        if (dist <= this.SAM_SEARCH_RADIUS * this.SAM_SEARCH_RADIUS) {
           localScore += this.structureValue(neighbor);
         }
       }
@@ -868,14 +874,15 @@ export class FakeHumanExecution implements Execution {
       for (const tile of around) {
         if (!player.canBuild(UnitType.SAMLauncher, tile)) continue;
 
-        // Double sécurité : si un SAM est déjà trop proche de ce tile, ignore-le
+        // Double securite: si un SAM est deja trop proche de ce tile, ignore-le
         if (
           sams.some(
             (s) =>
               this.mg.euclideanDistSquared(s.tile(), tile) <=
               this.SAM_SEARCH_RADIUS * this.SAM_SEARCH_RADIUS,
           )
-        ) continue;
+        )
+          continue;
 
         if (best === null || localScore > best.score) {
           best = { tile, score: localScore };

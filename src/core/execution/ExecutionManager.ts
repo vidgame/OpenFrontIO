@@ -19,6 +19,7 @@ import { MoveWarPlaneExecution } from "./MoveWarPlaneExecution";
 import { MoveWarshipExecution } from "./MoveWarshipExecution";
 import { NoOpExecution } from "./NoOpExecution";
 import { QuickChatExecution } from "./QuickChatExecution";
+import { RedAirExecution } from "./RedAirExecution";
 import { RetreatExecution } from "./RetreatExecution";
 import { SetTargetTroopRatioExecution } from "./SetTargetTroopRatioExecution";
 import { SpawnExecution } from "./SpawnExecution";
@@ -110,6 +111,8 @@ export class Executor {
         return new SetTargetTroopRatioExecution(playerID, intent.ratio);
       case "embargo":
         return new EmbargoExecution(player, intent.targetID, intent.action);
+      case "red_air":
+        return new RedAirExecution(playerID);
       case "build_unit":
         return new ConstructionExecution(
           playerID,
