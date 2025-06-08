@@ -44,6 +44,12 @@ export class FakeHumanExecution implements Execution {
   private lastNukeSent: [Tick, TileRef][] = [];
   private embargoMalusApplied = new Set<PlayerID>();
   private heckleEmoji: number[];
+  // Radius used to evaluate SAM launcher coverage
+  private readonly SAM_SEARCH_RADIUS = 60;
+  // Chance (out of 100) each tick that we'll consider building a SAM
+  private readonly SAM_BUILD_ATTEMPT_CHANCE = 10;
+  // Maximum SAM launchers we try to maintain
+  private readonly SAM_MAX_COUNT = 2;
 
   constructor(
     gameID: GameID,
@@ -53,7 +59,7 @@ export class FakeHumanExecution implements Execution {
       simpleHash(nation.playerInfo.id) + simpleHash(gameID),
     );
     // Bots act more frequently to launch missiles often
-    this.attackRate = this.random.nextInt(20, 40);
+    this.attackRate = this.random.nextInt(15, 30);
     this.attackTick = this.random.nextInt(0, this.attackRate);
     this.triggerRatio = this.random.nextInt(60, 90) / 100;
     this.reserveRatio = this.random.nextInt(30, 60) / 100;
@@ -310,6 +316,7 @@ export class FakeHumanExecution implements Execution {
       UnitType.Port,
       UnitType.SAMLauncher,
     );
+    const sams = other.units(UnitType.SAMLauncher);
     const structureTiles = structures.map((u) => u.tile());
     const randomTiles: (TileRef | null)[] = new Array(10);
     for (let i = 0; i < randomTiles.length; i++) {
@@ -339,15 +346,9 @@ export class FakeHumanExecution implements Execution {
       }
 
       if (this.player.gold() >= this.cost(UnitType.HydrogenBomb)) {
-        const ratio = this.landRatio(
-          tile,
-          this.mg.config().nukeMagnitudes(UnitType.HydrogenBomb).outer,
-        );
-        if (ratio >= 0.5) {
-          const val = value; // reuse same scoring
-          if (best === null || val > best.value) {
-            best = { tile, value: val, type: UnitType.HydrogenBomb };
-          }
+        const val = value * 1.2;
+        if (best === null || val > best.value) {
+          best = { tile, value: val, type: UnitType.HydrogenBomb };
         }
       }
     }
@@ -379,7 +380,7 @@ export class FakeHumanExecution implements Execution {
     if (maxBombs === 0) return;
 
     const strongEnemy = other.troops() > player.troops();
-    if (!this.random.chance(strongEnemy ? 80 : 40)) return;
+    if (!this.random.chance(strongEnemy ? 100 : 80)) return;
 
     const sams = other.units(UnitType.SAMLauncher);
     const structures = other.units(
@@ -394,7 +395,7 @@ export class FakeHumanExecution implements Execution {
     for (const u of structures) {
       candidateTiles.push(u.tile());
     }
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 15; i++) {
       const rand = this.randTerritoryTile(other);
       if (rand) candidateTiles.push(rand);
     }
@@ -408,7 +409,7 @@ export class FakeHumanExecution implements Execution {
       .filter(({ tile }) => player.canBuild(UnitType.PlaneBomb, tile))
       .sort((a, b) => b.score - a.score);
 
-    const bombLimit = strongEnemy ? maxBombs : Math.min(maxBombs, 2);
+    const bombLimit = strongEnemy ? maxBombs : Math.min(maxBombs, 5);
     for (const { tile } of scored.slice(0, bombLimit)) {
       this.mg.addExecution(
         new ConstructionExecution(player.id(), tile, UnitType.PlaneBomb),
@@ -464,7 +465,7 @@ export class FakeHumanExecution implements Execution {
           case UnitType.Port:
             return 10_000;
           case UnitType.SAMLauncher:
-            return 5_000;
+            return 12_000;
           default:
             return 0;
         }
@@ -538,8 +539,8 @@ export class FakeHumanExecution implements Execution {
     if (this.maybeSpawnWarship()) {
       return;
     }
-    this.maybeSpawnStructure(UnitType.MissileSilo, 1);
-    this.maybeSpawnStructure(UnitType.SAMLauncher, 1);
+    this.maybeSpawnStructure(UnitType.MissileSilo, 2);
+    this.maybeSpawnSAMLauncher();
     this.maybeSpawnWarPlane();
   }
 
@@ -617,7 +618,7 @@ export class FakeHumanExecution implements Execution {
         this.player!.incomingAttacks().some((a) => a.attacker() === n),
     );
     if (atWar && strongEnemy) {
-      allowed = Math.ceil(allowed * 1.5);
+      allowed = Math.ceil(allowed * 2);
     } else if (
       neighbors.length > 0 &&
       neighbors.every((n) => this.player!.troops() >= n.troops() * 1.5)
@@ -627,7 +628,7 @@ export class FakeHumanExecution implements Execution {
 
     if (planes.length >= allowed) return;
 
-    const spawnChance = strongEnemy ? 60 : 30;
+    const spawnChance = strongEnemy ? 100 : 60;
     if (!this.random.chance(spawnChance)) return;
 
     if (this.player.gold() < this.cost(UnitType.WarPlane)) return;
@@ -643,8 +644,8 @@ export class FakeHumanExecution implements Execution {
 
   private maxWarPlanes(): number {
     if (this.player === null) throw new Error("not initialized");
-    // Allow one war plane for every 100k troops
-    return Math.floor(this.player.troops() / 100_000);
+    // Allow one war plane for every 75k troops
+    return Math.floor(this.player.troops() / 75_000);
   }
 
   private randTerritoryTile(p: Player): TileRef | null {
@@ -765,6 +766,80 @@ export class FakeHumanExecution implements Execution {
       }
     }
     return null;
+  }
+
+  private structureValue(unit: Unit): number {
+    switch (unit.type()) {
+      case UnitType.City:
+        return 25_000;
+      case UnitType.DefensePost:
+        return 5_000;
+      case UnitType.MissileSilo:
+        return 50_000;
+      case UnitType.Port:
+        return 10_000;
+      case UnitType.SAMLauncher:
+        return 20_000;
+      case UnitType.Factory:
+        return 15_000;
+      case UnitType.Airport:
+        return 20_000;
+      default:
+        return 0;
+    }
+  }
+
+  private maybeSpawnSAMLauncher(): void {
+    if (this.player === null) throw new Error("not initialized");
+    const player = this.player;
+
+    if (!this.random.chance(this.SAM_BUILD_ATTEMPT_CHANCE)) return;
+    if (player.gold() < this.cost(UnitType.SAMLauncher)) return;
+
+    const sams = player.units(UnitType.SAMLauncher);
+    if (sams.length >= this.SAM_MAX_COUNT) return;
+
+    const structures = player
+      .units(
+        UnitType.City,
+        UnitType.DefensePost,
+        UnitType.MissileSilo,
+        UnitType.Port,
+        UnitType.Factory,
+        UnitType.Airport,
+      )
+      .sort((a, b) => this.structureValue(b) - this.structureValue(a))
+      .slice(0, 3); // only check the most valuable few
+
+    let best: { tile: TileRef; score: number } | null = null;
+    for (const structure of structures) {
+      const around = this.mg.bfs(
+        structure.tile(),
+        euclDistFN(structure.tile(), 5, false),
+      );
+      for (const tile of around) {
+        if (!player.canBuild(UnitType.SAMLauncher, tile)) continue;
+        let score = this.structureValue(structure);
+        if (
+          sams.some(
+            (s) =>
+              this.mg.euclideanDistSquared(s.tile(), tile) <=
+              this.SAM_SEARCH_RADIUS * this.SAM_SEARCH_RADIUS,
+          )
+        ) {
+          score *= 0.5;
+        }
+        if (best === null || score > best.score) {
+          best = { tile, score };
+        }
+      }
+    }
+
+    if (best) {
+      this.mg.addExecution(
+        new ConstructionExecution(player.id(), best.tile, UnitType.SAMLauncher),
+      );
+    }
   }
 
   isActive(): boolean {
