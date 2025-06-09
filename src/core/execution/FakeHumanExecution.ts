@@ -119,7 +119,7 @@ export class FakeHumanExecution implements Execution {
     if (this.mg.inSpawnPhase()) {
       const rl = this.randomLand();
       if (rl === null) {
-        consolex.warn(`cannot spawn ${this.nation.playerInfo.name}`);
+        consolex.warn(cannot spawn ${this.nation.playerInfo.name});
         return;
       }
       this.mg.addExecution(new SpawnExecution(this.nation.playerInfo, rl));
@@ -441,9 +441,6 @@ export class FakeHumanExecution implements Execution {
     const usedTiles = new Set<TileRef>();
     let bombsLeft = nbBombers;
 
-    // --- DEBUT DE LA MODIFICATION ---
-
-    // 1. Assigner les bombes aux cibles de grande valeur
     for (const { tile } of scored) {
       if (bombsLeft === 0) break;
       if (usedTiles.has(tile)) continue;
@@ -453,34 +450,6 @@ export class FakeHumanExecution implements Execution {
       usedTiles.add(tile);
       bombsLeft--;
     }
-
-    // 2. Assigner les bombes restantes à des cases valides aléatoires sur le territoire ennemi
-    let attempts = 0;
-    const maxAttempts = 50; // Pour éviter les boucles infinies si aucune cible n'est trouvée
-
-    while (bombsLeft > 0 && attempts < maxAttempts) {
-      const randomTarget = this.randTerritoryTile(other);
-
-      if (
-        randomTarget &&
-        !usedTiles.has(randomTarget) &&
-        player.canBuild(UnitType.PlaneBomb, randomTarget)
-      ) {
-        this.mg.addExecution(
-          new ConstructionExecution(
-            player.id(),
-            randomTarget,
-            UnitType.PlaneBomb,
-          ),
-        );
-        usedTiles.add(randomTarget);
-        bombsLeft--;
-      }
-
-      attempts++;
-    }
-
-    // --- FIN DE LA MODIFICATION ---
   }
 
   private removeOldNukeEvents() {
