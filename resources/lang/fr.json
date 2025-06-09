@@ -88,6 +88,8 @@
     "build_warship_desc": "Patrouille dans une zone, capturant les navires commerciaux ennemis et détruisant leurs bateaux (navires de transport) et navires de guerre. Apparaît dans le Port le plus proche et patrouille la zone que vous avez cliquée pour le construire. Vous pouvez contrôler les vaisseaux de guerre en cliquant sur eux (voir Attaque sous Raccourcis) puis en cliquant sur la nouvelle zone dans laquelle vous voulez les déplacer.",
     "build_warplane": "Avion de guerre",
     "build_warplane_desc": "Patrouille dans une zone et attaque automatiquement les avions ennemis sauf les alliés. Apparaît depuis l'aéroport le plus proche et patrouille la zone que vous avez cliquée pour le construire.",
+    "build_red_air": "Red Air",
+    "build_red_air_desc": "Envoie tous vos avions disponibles sur un joueur ciblé. Le coût dépend du nombre d'avions.",
     "build_silo": "Silo à missiles",
     "build_silo_desc": "Permet de lancer des missiles.",
     "build_sam": "Lanceur SAM",
@@ -225,6 +227,7 @@
     "hydrogen_bomb": "Bombe à hydrogène",
     "plane_bomb": "Bombe d'avion",
     "mirv": "MIRV",
+    "red_air": "Red Air",
     "factory": "Usine"
   },
   "user_setting": {
@@ -353,6 +356,7 @@
       "sam_launcher": "Protège contre les bombes nucléaires",
       "warship": "Capture les navires commerciaux, détruit les navires de guerre et les bateaux",
       "warplane": "Attaque les avions ennemis",
+      "red_air": "Envoie tous les avions sur la même cible",
       "plane_bomb": "Bombe lâchée par avion",
       "port": "Envoie des navires commerciaux pour produire de l'or",
       "defense_post": "Augmente les défenses des frontières voisines",
