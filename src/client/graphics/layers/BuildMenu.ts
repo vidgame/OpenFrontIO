@@ -13,6 +13,8 @@ import atomBombIcon from "../../../../resources/images/NukeIconWhite.svg";
 import portIcon from "../../../../resources/images/PortIcon.svg";
 import samlauncherIcon from "../../../../resources/images/SamLauncherIconWhite.svg";
 import shieldIcon from "../../../../resources/images/ShieldIconWhite.svg";
+import redairIcon from "../../../../resources/images/redairIconWhite.svg";
+import airBombIcon from "../../../../resources/images/airBombIconWhite.svg";
 import { translateText } from "../../../client/Utils";
 import { EventBus } from "../../../core/EventBus";
 import { Cell, Gold, PlayerActions, UnitType } from "../../../core/game/Game";
@@ -70,14 +72,14 @@ const buildTable: BuildItemDisplay[][] = [
     },
     {
       action: "red_air",
-      icon: warplaneIcon,
+      icon: redairIcon,
       description: "build_menu.desc.red_air",
       key: "unit_type.red_air",
       countable: false,
     },
     {
       unitType: UnitType.PlaneBomb,
-      icon: atomBombIcon,
+      icon: airBombIcon,
       description: "build_menu.desc.plane_bomb",
       key: "unit_type.plane_bomb",
       countable: false,
