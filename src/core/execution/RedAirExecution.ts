@@ -1,5 +1,4 @@
 import {
-  Cell,
   Execution,
   Game,
   Player,
@@ -9,8 +8,6 @@ import {
   UnitType,
 } from "../game/Game";
 import { TileRef } from "../game/GameMap";
-import { PseudoRandom } from "../PseudoRandom";
-import { calculateBoundingBox } from "../Util";
 import { NukeExecution } from "./NukeExecution";
 
 interface Assignment {
@@ -119,6 +116,7 @@ export class RedAirExecution implements Execution {
         candidates.push({ tile: unit.tile(), score: around.length });
       }
     }
+    if (candidates.length === 0) return [];
     candidates.sort((a, b) => b.score - a.score);
     const minDist = radius * 1.5;
     const minDist2 = minDist * minDist;
@@ -130,42 +128,9 @@ export class RedAirExecution implements Execution {
       );
       if (!close) targets.push(cand.tile);
     }
-
-    const random = new PseudoRandom(this.mg.ticks());
-    const box = calculateBoundingBox(this.mg, enemy.borderTiles());
-
-    const isBuilding = (tile: TileRef): boolean => {
-      return this.mg!.nearbyUnits(tile, 0, buildingTypes).length > 0;
-    };
-
-    let attempts = 0;
-    while (targets.length < num && attempts < 200) {
-      const randX = random.nextInt(box.min.x, box.max.x);
-      const randY = random.nextInt(box.min.y, box.max.y);
-      if (!this.mg.isOnMap(new Cell(randX, randY))) {
-        attempts++;
-        continue;
-      }
-      const randTile = this.mg.ref(randX, randY);
-      if (this.mg.owner(randTile) !== enemy) {
-        attempts++;
-        continue;
-      }
-      if (isBuilding(randTile)) {
-        attempts++;
-        continue;
-      }
-      if (!targets.includes(randTile)) {
-        targets.push(randTile);
-      }
-      attempts++;
-    }
-
-    if (targets.length === 0 && candidates.length > 0)
-      targets.push(candidates[0].tile);
-    const baseLen = targets.length;
-    while (targets.length < num && baseLen > 0) {
-      targets.push(targets[targets.length % baseLen]);
+    if (targets.length === 0) targets.push(candidates[0].tile);
+    while (targets.length < num) {
+      targets.push(targets[targets.length % candidates.length]);
     }
     return targets.slice(0, num);
   }
