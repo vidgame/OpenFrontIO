@@ -430,23 +430,7 @@ export class FakeHumanExecution implements Execution {
     }
 
     const silos = player.units(UnitType.MissileSilo);
-    const uniqueTiles = Array.from(new Set(candidateTiles));
-
-    // If we don't have enough unique targets, add random empty tiles
-    let attempts = 0;
-    while (uniqueTiles.length < nbBombers && attempts < 100) {
-      const rand = this.randTerritoryTile(other);
-      if (
-        rand &&
-        !uniqueTiles.includes(rand) &&
-        !other.units().some((u) => u.tile() === rand)
-      ) {
-        uniqueTiles.push(rand);
-      }
-      attempts++;
-    }
-
-    const scored = uniqueTiles
+    const scored = Array.from(new Set(candidateTiles))
       .map((tile) => ({
         tile,
         score: this.nukeTileScore(tile, silos, structures),
@@ -454,26 +438,17 @@ export class FakeHumanExecution implements Execution {
       .filter(({ tile }) => player.canBuild(UnitType.PlaneBomb, tile))
       .sort((a, b) => b.score - a.score);
 
+    const usedTiles = new Set<TileRef>();
     let bombsLeft = nbBombers;
 
     for (const { tile } of scored) {
       if (bombsLeft === 0) break;
+      if (usedTiles.has(tile)) continue;
       this.mg.addExecution(
         new ConstructionExecution(player.id(), tile, UnitType.PlaneBomb),
       );
+      usedTiles.add(tile);
       bombsLeft--;
-    }
-
-    if (bombsLeft > 0 && scored.length > 0) {
-      let index = 0;
-      while (bombsLeft > 0) {
-        const tile = scored[index % scored.length].tile;
-        this.mg.addExecution(
-          new ConstructionExecution(player.id(), tile, UnitType.PlaneBomb),
-        );
-        bombsLeft--;
-        index++;
-      }
     }
   }
 
