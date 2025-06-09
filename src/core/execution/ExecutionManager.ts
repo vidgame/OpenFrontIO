@@ -112,7 +112,7 @@ export class Executor {
       case "embargo":
         return new EmbargoExecution(player, intent.targetID, intent.action);
       case "red_air":
-        return new RedAirExecution(playerID);
+        return new RedAirExecution(playerID, intent.targetID);
       case "build_unit":
         return new ConstructionExecution(
           playerID,

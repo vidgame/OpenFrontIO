@@ -23,7 +23,10 @@ export class RedAirExecution implements Execution {
   private assignments: Assignment[] = [];
   private active = true;
 
-  constructor(private readonly playerID: PlayerID) {}
+  constructor(
+    private readonly playerID: PlayerID,
+    private readonly targetID: PlayerID,
+  ) {}
 
   init(mg: Game, ticks: number): void {
     this.mg = mg;
@@ -52,7 +55,15 @@ export class RedAirExecution implements Execution {
     }
     this.player.removeGold(cost);
 
-    const targets = this.chooseTargets(planes.length);
+    const targetPlayer = mg.hasPlayer(this.targetID)
+      ? mg.player(this.targetID)
+      : null;
+    if (!targetPlayer || targetPlayer === this.player) {
+      this.active = false;
+      return;
+    }
+
+    const targets = this.chooseTargets(planes.length, targetPlayer);
     if (targets.length === 0) {
       this.active = false;
       return;
@@ -79,7 +90,7 @@ export class RedAirExecution implements Execution {
     });
   }
 
-  private chooseTargets(num: number): TileRef[] {
+  private chooseTargets(num: number, enemy: Player): TileRef[] {
     if (!this.mg || !this.player) return [];
     const buildingTypes = [
       UnitType.City,
@@ -90,13 +101,7 @@ export class RedAirExecution implements Execution {
       UnitType.Airport,
       UnitType.SAMLauncher,
     ];
-    const targeted = this.player.targets();
-    const enemies =
-      targeted.length > 0
-        ? targeted
-        : this.mg
-            .players()
-            .filter((p) => p !== this.player && !this.player!.isFriendly(p));
+    const enemies = [enemy];
     const candidates: { tile: TileRef; score: number }[] = [];
     const radius = this.mg.config().nukeMagnitudes(UnitType.AtomBomb).outer;
     for (const enemy of enemies) {

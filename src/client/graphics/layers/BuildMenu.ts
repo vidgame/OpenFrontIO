@@ -17,7 +17,7 @@ import { translateText } from "../../../client/Utils";
 import { EventBus } from "../../../core/EventBus";
 import { Cell, Gold, PlayerActions, UnitType } from "../../../core/game/Game";
 import { TileRef } from "../../../core/game/GameMap";
-import { GameView } from "../../../core/game/GameView";
+import { GameView, PlayerView } from "../../../core/game/GameView";
 import { BuildUnitIntentEvent, SendRedAirIntentEvent } from "../../Transport";
 import { renderNumber } from "../../Utils";
 import { Layer } from "./Layer";
@@ -357,7 +357,9 @@ export class BuildMenu extends LitElement implements Layer {
       const player = this.game?.myPlayer();
       if (!player || this.playerActions === null) return false;
       const owner = this.game.owner(this.clickedTile);
-      if (!owner.isPlayer() || owner === player || player.isOnSameTeam(owner)) {
+      if (!owner.isPlayer()) return false;
+      const ownerPlayer = owner as PlayerView;
+      if (ownerPlayer === player || player.isOnSameTeam(ownerPlayer)) {
         return false;
       }
       const planes = this.availablePlanes();
@@ -405,7 +407,11 @@ export class BuildMenu extends LitElement implements Layer {
 
   public onBuildSelected = (item: BuildItemDisplay) => {
     if (item.action === "red_air") {
-      this.eventBus.emit(new SendRedAirIntentEvent());
+      const owner = this.game.owner(this.clickedTile);
+      if (owner.isPlayer()) {
+        const ownerPlayer = owner as PlayerView;
+        this.eventBus.emit(new SendRedAirIntentEvent(ownerPlayer.id()));
+      }
     } else if (item.unitType !== undefined) {
       this.eventBus.emit(
         new BuildUnitIntentEvent(
