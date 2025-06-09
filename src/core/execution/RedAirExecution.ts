@@ -8,6 +8,8 @@ import {
   UnitType,
 } from "../game/Game";
 import { TileRef } from "../game/GameMap";
+import { PseudoRandom } from "../PseudoRandom";
+import { calculateBoundingBox } from "../Util";
 import { NukeExecution } from "./NukeExecution";
 
 interface Assignment {
@@ -21,6 +23,7 @@ export class RedAirExecution implements Execution {
   private mg: Game | null = null;
   private player: Player | null = null;
   private assignments: Assignment[] = [];
+  private random: PseudoRandom | null = null;
   private active = true;
 
   constructor(
@@ -30,6 +33,7 @@ export class RedAirExecution implements Execution {
 
   init(mg: Game, ticks: number): void {
     this.mg = mg;
+    this.random = new PseudoRandom(mg.ticks());
     if (!mg.hasPlayer(this.playerID)) {
       console.warn(`RedAirExecution: player ${this.playerID} not found`);
       this.active = false;
@@ -91,7 +95,7 @@ export class RedAirExecution implements Execution {
   }
 
   private chooseTargets(num: number, enemy: Player): TileRef[] {
-    if (!this.mg || !this.player) return [];
+    if (!this.mg || !this.player || !this.random) return [];
     const buildingTypes = [
       UnitType.City,
       UnitType.DefensePost,
@@ -116,7 +120,6 @@ export class RedAirExecution implements Execution {
         candidates.push({ tile: unit.tile(), score: around.length });
       }
     }
-    if (candidates.length === 0) return [];
     candidates.sort((a, b) => b.score - a.score);
     const minDist = radius * 1.5;
     const minDist2 = minDist * minDist;
@@ -128,11 +131,52 @@ export class RedAirExecution implements Execution {
       );
       if (!close) targets.push(cand.tile);
     }
-    if (targets.length === 0) targets.push(candidates[0].tile);
-    while (targets.length < num) {
-      targets.push(targets[targets.length % candidates.length]);
+
+    if (targets.length === 0 && candidates.length > 0) {
+      targets.push(candidates[0].tile);
     }
+
+    while (targets.length < num) {
+      const rand = this.randEmptyTerritoryTile(enemy);
+      if (rand !== null) {
+        targets.push(rand);
+      } else if (candidates.length > 0) {
+        targets.push(candidates[targets.length % candidates.length].tile);
+      } else if (targets.length > 0) {
+        targets.push(targets[0]);
+      } else {
+        break;
+      }
+    }
+
     return targets.slice(0, num);
+  }
+
+  private randEmptyTerritoryTile(p: Player): TileRef | null {
+    if (!this.mg || !this.random) return null;
+    const box = calculateBoundingBox(this.mg, p.borderTiles());
+    const buildingTypes = [
+      UnitType.City,
+      UnitType.DefensePost,
+      UnitType.MissileSilo,
+      UnitType.Port,
+      UnitType.Factory,
+      UnitType.Airport,
+      UnitType.SAMLauncher,
+    ];
+    for (let i = 0; i < 100; i++) {
+      const x = this.random.nextInt(box.min.x, box.max.x + 1);
+      const y = this.random.nextInt(box.min.y, box.max.y + 1);
+      if (!this.mg.isValidCoord(x, y)) continue;
+      const tile = this.mg.ref(x, y);
+      if (this.mg.owner(tile) !== p) continue;
+      const hasBuilding = p
+        .units(...buildingTypes)
+        .some((u) => u.tile() === tile);
+      if (hasBuilding) continue;
+      return tile;
+    }
+    return null;
   }
 
   tick(ticks: number): void {
