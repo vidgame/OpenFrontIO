@@ -34,7 +34,8 @@ export type Intent =
   | EmbargoIntent
   | QuickChatIntent
   | MoveWarshipIntent
-  | MoveWarPlaneIntent;
+  | MoveWarPlaneIntent
+  | RedAirIntent;
 
 export type AttackIntent = z.infer<typeof AttackIntentSchema>;
 export type CancelAttackIntent = z.infer<typeof CancelAttackIntentSchema>;
@@ -57,6 +58,7 @@ export type TargetTroopRatioIntent = z.infer<
 export type BuildUnitIntent = z.infer<typeof BuildUnitIntentSchema>;
 export type MoveWarshipIntent = z.infer<typeof MoveWarshipIntentSchema>;
 export type MoveWarPlaneIntent = z.infer<typeof MoveWarPlaneIntentSchema>;
+export type RedAirIntent = z.infer<typeof RedAirIntentSchema>;
 export type QuickChatIntent = z.infer<typeof QuickChatIntentSchema>;
 
 export type Turn = z.infer<typeof TurnSchema>;
@@ -286,6 +288,11 @@ export const MoveWarPlaneIntentSchema = BaseIntentSchema.extend({
   tile: z.number(),
 });
 
+export const RedAirIntentSchema = BaseIntentSchema.extend({
+  type: z.literal("red_air"),
+  targetID: ID,
+});
+
 export const QuickChatKeySchema = z.enum(
   Object.entries(quickChatData).flatMap(([category, entries]) =>
     entries.map((entry) => `${category}.${entry.key}`),
@@ -317,6 +324,7 @@ const IntentSchema = z.union([
   EmbargoIntentSchema,
   MoveWarshipIntentSchema,
   MoveWarPlaneIntentSchema,
+  RedAirIntentSchema,
   QuickChatIntentSchema,
 ]);
 
