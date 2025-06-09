@@ -119,7 +119,7 @@ export class FakeHumanExecution implements Execution {
     if (this.mg.inSpawnPhase()) {
       const rl = this.randomLand();
       if (rl === null) {
-        consolex.warn(cannot spawn ${this.nation.playerInfo.name});
+        consolex.warn(`cannot spawn ${this.nation.playerInfo.name}`);
         return;
       }
       this.mg.addExecution(new SpawnExecution(this.nation.playerInfo, rl));
