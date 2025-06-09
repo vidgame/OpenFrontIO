@@ -162,7 +162,7 @@ export class MoveWarPlaneIntentEvent implements GameEvent {
 }
 
 export class SendRedAirIntentEvent implements GameEvent {
-  constructor() {}
+  constructor(public readonly targetID: PlayerID) {}
 }
 
 export class Transport {
@@ -239,8 +239,8 @@ export class Transport {
     this.eventBus.on(MoveWarPlaneIntentEvent, (e) => {
       this.onMoveWarPlaneEvent(e);
     });
-    this.eventBus.on(SendRedAirIntentEvent, () => {
-      this.onSendRedAirIntent();
+    this.eventBus.on(SendRedAirIntentEvent, (e) => {
+      this.onSendRedAirIntent(e);
     });
   }
 
@@ -611,10 +611,11 @@ export class Transport {
     });
   }
 
-  private onSendRedAirIntent() {
+  private onSendRedAirIntent(event: SendRedAirIntentEvent) {
     this.sendIntent({
       type: "red_air",
       clientID: this.lobbyConfig.clientID,
+      targetID: event.targetID,
     });
   }
 

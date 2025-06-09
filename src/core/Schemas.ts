@@ -290,6 +290,7 @@ export const MoveWarPlaneIntentSchema = BaseIntentSchema.extend({
 
 export const RedAirIntentSchema = BaseIntentSchema.extend({
   type: z.literal("red_air"),
+  targetID: ID,
 });
 
 export const QuickChatKeySchema = z.enum(

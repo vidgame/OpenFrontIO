@@ -23,7 +23,10 @@ export class RedAirExecution implements Execution {
   private assignments: Assignment[] = [];
   private active = true;
 
-  constructor(private readonly playerID: PlayerID) {}
+  constructor(
+    private readonly playerID: PlayerID,
+    private readonly targetID: PlayerID,
+  ) {}
 
   init(mg: Game, ticks: number): void {
     this.mg = mg;
@@ -90,22 +93,23 @@ export class RedAirExecution implements Execution {
       UnitType.Airport,
       UnitType.SAMLauncher,
     ];
-    const enemies = this.mg
-      .players()
-      .filter((p) => p !== this.player && !this.player!.isFriendly(p));
+    const target = this.mg.hasPlayer(this.targetID)
+      ? this.mg.player(this.targetID)
+      : null;
+    if (!target || this.player!.isFriendly(target) || target === this.player) {
+      return [];
+    }
     const candidates: { tile: TileRef; score: number }[] = [];
     const radius = this.mg.config().nukeMagnitudes(UnitType.AtomBomb).outer;
-    for (const enemy of enemies) {
-      for (const unit of enemy.units(...buildingTypes)) {
-        const around = this.mg
-          .nearbyUnits(unit.tile(), radius, buildingTypes)
-          .filter(
-            ({ unit }) =>
-              unit.owner() !== this.player &&
-              !unit.owner().isFriendly(this.player!),
-          );
-        candidates.push({ tile: unit.tile(), score: around.length });
-      }
+    for (const unit of target.units(...buildingTypes)) {
+      const around = this.mg
+        .nearbyUnits(unit.tile(), radius, buildingTypes)
+        .filter(
+          ({ unit }) =>
+            unit.owner() !== this.player &&
+            !unit.owner().isFriendly(this.player!),
+        );
+      candidates.push({ tile: unit.tile(), score: around.length });
     }
     if (candidates.length === 0) return [];
     candidates.sort((a, b) => b.score - a.score);

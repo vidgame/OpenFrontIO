@@ -405,7 +405,10 @@ export class BuildMenu extends LitElement implements Layer {
 
   public onBuildSelected = (item: BuildItemDisplay) => {
     if (item.action === "red_air") {
-      this.eventBus.emit(new SendRedAirIntentEvent());
+      const owner = this.game.owner(this.clickedTile);
+      if (owner.isPlayer()) {
+        this.eventBus.emit(new SendRedAirIntentEvent(owner.id()));
+      }
     } else if (item.unitType !== undefined) {
       this.eventBus.emit(
         new BuildUnitIntentEvent(
