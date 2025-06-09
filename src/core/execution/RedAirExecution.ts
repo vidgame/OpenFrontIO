@@ -90,9 +90,13 @@ export class RedAirExecution implements Execution {
       UnitType.Airport,
       UnitType.SAMLauncher,
     ];
-    const enemies = this.mg
-      .players()
-      .filter((p) => p !== this.player && !this.player!.isFriendly(p));
+    const targeted = this.player.targets();
+    const enemies =
+      targeted.length > 0
+        ? targeted
+        : this.mg
+            .players()
+            .filter((p) => p !== this.player && !this.player!.isFriendly(p));
     const candidates: { tile: TileRef; score: number }[] = [];
     const radius = this.mg.config().nukeMagnitudes(UnitType.AtomBomb).outer;
     for (const enemy of enemies) {
