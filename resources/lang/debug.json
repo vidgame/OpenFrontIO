@@ -12,7 +12,8 @@
     "single_player": "main.single_player",
     "instructions": "main.instructions",
     "how_to_play": "main.how_to_play",
-    "wiki": "main.wiki"
+    "wiki": "main.wiki",
+    "add_friend": "Add Friend"
   },
   "help_modal": {
     "hotkeys": "help_modal.hotkeys",

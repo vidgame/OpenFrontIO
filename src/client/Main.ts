@@ -5,6 +5,8 @@ import { GameRecord, GameStartInfo } from "../core/Schemas";
 import { getServerConfigFromClient } from "../core/configuration/ConfigLoader";
 import { GameType } from "../core/game/Game";
 import { UserSettings } from "../core/game/UserSettings";
+import "./AddFriendModal";
+import { AddFriendModal } from "./AddFriendModal";
 import { joinLobby } from "./ClientGameRunner";
 import "./DarkModeButton";
 import { DarkModeButton } from "./DarkModeButton";
@@ -56,6 +58,7 @@ class Client {
   private publicLobby: PublicLobby;
   private googleAds: NodeListOf<GoogleAdElement>;
   private userSettings: UserSettings = new UserSettings();
+  private addFriendModal: AddFriendModal | null = null;
 
   constructor() {}
 
@@ -105,9 +108,17 @@ class Client {
     // const loginDiscordButton = document.getElementById(
     //   "login-discord",
     // ) as OButton;
-    const logoutDiscordButton = document.getElementById(
-      "logout-discord",
+    const addFriendButton = document.getElementById(
+      "add-friend-button",
     ) as OButton;
+    this.addFriendModal = document.querySelector(
+      "add-friend-modal",
+    ) as AddFriendModal;
+    if (addFriendButton) {
+      addFriendButton.addEventListener("click", () => {
+        this.addFriendModal?.open();
+      });
+    }
 
     this.usernameInput = document.querySelector(
       "username-input",
