@@ -6,15 +6,15 @@ import cityIcon from "../../../../resources/images/CityIconWhite.svg";
 import factoryIcon from "../../../../resources/images/FactoryIconWhite.svg";
 import warplaneIcon from "../../../../resources/images/FighterIconWhite.svg";
 import goldCoinIcon from "../../../../resources/images/GoldCoinIcon.svg";
-import mirvIcon from "../../../../resources/images/MIRVIcon.svg";
+// import mirvIcon from "../../../../resources/images/MIRVIcon.svg";
 import missileSiloIcon from "../../../../resources/images/MissileSiloIconWhite.svg";
 import hydrogenBombIcon from "../../../../resources/images/MushroomCloudIconWhite.svg";
 import atomBombIcon from "../../../../resources/images/NukeIconWhite.svg";
 import portIcon from "../../../../resources/images/PortIcon.svg";
 import samlauncherIcon from "../../../../resources/images/SamLauncherIconWhite.svg";
 import shieldIcon from "../../../../resources/images/ShieldIconWhite.svg";
-import redairIcon from "../../../../resources/images/redairIconWhite.svg";
 import airBombIcon from "../../../../resources/images/airBombIconWhite.svg";
+import redairIcon from "../../../../resources/images/redairIconWhite.svg";
 import { translateText } from "../../../client/Utils";
 import { EventBus } from "../../../core/EventBus";
 import { Cell, Gold, PlayerActions, UnitType } from "../../../core/game/Game";
@@ -42,13 +42,13 @@ const buildTable: BuildItemDisplay[][] = [
       key: "unit_type.atom_bomb",
       countable: false,
     },
-    {
-      unitType: UnitType.MIRV,
-      icon: mirvIcon,
-      description: "build_menu.desc.mirv",
-      key: "unit_type.mirv",
-      countable: false,
-    },
+    // {
+    //   unitType: UnitType.MIRV,
+    //   icon: mirvIcon,
+    //   description: "build_menu.desc.mirv",
+    //   key: "unit_type.mirv",
+    //   countable: false,
+    // },
     {
       unitType: UnitType.HydrogenBomb,
       icon: hydrogenBombIcon,

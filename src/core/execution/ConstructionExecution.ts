@@ -14,7 +14,7 @@ import { AirportExecution } from "./AirportExecution";
 import { CityExecution } from "./CityExecution";
 import { DefensePostExecution } from "./DefensePostExecution";
 import { FactoryExecution } from "./FactoryExecution";
-import { MirvExecution } from "./MIRVExecution";
+// import { MirvExecution } from "./MIRVExecution";
 import { MissileSiloExecution } from "./MissileSiloExecution";
 import { NukeExecution } from "./NukeExecution";
 import { PlaneBombExecution } from "./PlaneBombExecution";
@@ -108,9 +108,9 @@ export class ConstructionExecution implements Execution {
       case UnitType.PlaneBomb:
         this.mg.addExecution(new PlaneBombExecution(player.id(), this.tile));
         break;
-      case UnitType.MIRV:
-        this.mg.addExecution(new MirvExecution(player.id(), this.tile));
-        break;
+      // case UnitType.MIRV:
+      //   this.mg.addExecution(new MirvExecution(player.id(), this.tile));
+      //   break;
       case UnitType.Warship:
         this.mg.addExecution(
           new WarshipExecution({ owner: player, patrolTile: this.tile }),
