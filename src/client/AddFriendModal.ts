@@ -28,14 +28,20 @@ export class AddFriendModal extends LitElement {
     this.friendName = target.value;
   }
 
-  private handleAdd() {
+  private async handleAdd() {
     const name = this.friendName.trim();
     if (!name) return;
-    const stored = localStorage.getItem("friends");
-    const friends = stored ? JSON.parse(stored) : [];
-    if (!friends.includes(name)) {
-      friends.push(name);
-      localStorage.setItem("friends", JSON.stringify(friends));
+    try {
+      const res = await fetch("/api/friends", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) {
+        console.error("Failed to add friend");
+      }
+    } catch (err) {
+      console.error("Failed to add friend", err);
     }
     this.friendName = "";
     this.close();

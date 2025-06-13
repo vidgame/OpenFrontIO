@@ -17,6 +17,7 @@ import {
 import { CreateGameInputSchema, GameInputSchema } from "../core/WorkerSchemas";
 import { archive, readGameRecord } from "./Archive";
 import { Client } from "./Client";
+import { addFriend, readFriends } from "./FriendDB";
 import { GameManager } from "./GameManager";
 import { gatekeeper, LimiterType } from "./Gatekeeper";
 import { getUserMe, verifyClientToken } from "./jwt";
@@ -258,6 +259,27 @@ export function startWorker() {
       res.json({
         success: true,
       });
+    }),
+  );
+
+  // --- Friends endpoints ---
+  app.get(
+    "/api/friends",
+    gatekeeper.httpHandler(LimiterType.Get, async (req, res) => {
+      const friends = await readFriends();
+      res.json({ friends });
+    }),
+  );
+
+  app.post(
+    "/api/friends",
+    gatekeeper.httpHandler(LimiterType.Post, async (req, res) => {
+      const name = (req.body?.name as string | undefined)?.trim();
+      if (!name) {
+        return res.status(400).json({ error: "Invalid name" });
+      }
+      await addFriend(name);
+      res.json({ success: true });
     }),
   );
 
